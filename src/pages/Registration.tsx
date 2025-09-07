@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
-import { generateTransactionRef } from "@/lib/payments";
+import { buildUpiIntentUrl, generateTransactionRef } from "@/lib/payments";
 import { postRegistrationToSheets } from "@/lib/sheets";
 import Footer from "@/components/Footer";
 import qrStatic from "@/pages/1343c33b-2a08-4fc1-8540-ccf73c77131b.jpg";
@@ -23,7 +23,7 @@ const events = {
     { id: 'photography', name: 'Photography Contest', price: 150 },
     { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200 },
     { id: 'drawing', name: 'Live Drawing', price: 100 },
-    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 250 },
+    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 1 },
     { id: 'meme-contest', name: 'Tech Meme Contest', price: 50 },
   ],
 };
@@ -42,6 +42,7 @@ const Registration = () => {
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [upiTxnId, setUpiTxnId] = useState("");
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -67,14 +68,32 @@ const Registration = () => {
     );
   };
 
-  // Set static QR when total > 0
+
+  // Generate dynamic UPI QR with exact amount; fallback to static image on error
   useEffect(() => {
     const totalAmount = getTotalAmount();
     if (totalAmount <= 0) {
       setQrDataUrl(null);
       return;
     }
-    setQrDataUrl(qrStatic as unknown as string);
+    (async () => {
+      try {
+        const envVars = (import.meta as unknown as { env: Record<string, string | undefined> }).env || {};
+        const upiUrl = buildUpiIntentUrl({
+          payeeVpa: envVars.VITE_UPI_VPA || "raghavap1115-1@okicici",
+          payeeName: envVars.VITE_UPI_NAME || "Raghava P",
+          amount: totalAmount,
+          transactionNote: `Cache 2025 - ${formData.fullName || "Participant"}`,
+          transactionRef: generateTransactionRef(),
+          currency: 'INR',
+        });
+        const mod = await import("qrcode") as { toDataURL: (text: string, options?: { width?: number; margin?: number }) => Promise<string> };
+        const dataUrl: string = await mod.toDataURL(upiUrl, { width: 240, margin: 1 });
+        setQrDataUrl(dataUrl);
+      } catch {
+        setQrDataUrl(qrStatic as unknown as string);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedEvents, formData.fullName]);
 
@@ -93,17 +112,40 @@ const Registration = () => {
     try {
       const totalAmount = getTotalAmount();
       const transactionRef = generateTransactionRef();
-      const res = await postRegistrationToSheets({
+      const payload = {
         ...formData,
         selectedEvents,
         totalAmount,
         transactionRef,
         paidAtIso: new Date().toISOString(),
-      });
-      if (!res.ok) throw new Error(`Sheets error: ${res.status}`);
+        upiTxnId: upiTxnId.trim() || undefined,
+      };
+
+      console.log("Sending to Google Sheets:", payload);
+
+      const res = await postRegistrationToSheets(payload);
+      console.log("Response status:", res.status);
+      console.log("Response ok:", res.ok);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Sheets error response:", errorText);
+        throw new Error(`Sheets error: ${res.status} - ${errorText}`);
+      }
+
+      const result = await res.json();
+      console.log("Success response:", result);
+
       toast({
         title: "Registration submitted",
         description: "Your details have been recorded successfully.",
+      });
+    } catch (error) {
+      console.error("Error submitting to sheets:", error);
+      toast({
+        title: "Error",
+        description: `Failed to submit registration: ${error.message}`,
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -260,6 +302,37 @@ const Registration = () => {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            {/* Payment Proof */}
+            <Card className="card-gradient border-border animate-slide-up">
+              <CardHeader>
+                <CardTitle className="text-2xl text-gradient">Payment Proof</CardTitle>
+                <CardDescription>Enter 12-digit UTR ID from your payment</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="upiTxnId">12-Digit UTR (Unique Transaction Reference) ID *</Label>
+                  <Input
+                    id="upiTxnId"
+                    name="upiTxnId"
+                    placeholder="e.g., 123456789012"
+                    value={upiTxnId}
+                    onChange={(e) => setUpiTxnId(e.target.value)}
+                    className="mt-1"
+                    required
+                    maxLength={12}
+                    pattern="[0-9]{12}"
+                  />
+                  <div className="text-xs text-muted-foreground mt-1">
+                    <strong>How to find your 12-digit UTR ID:</strong>
+                    <br />• Check your UPI app (PhonePe, Google Pay, Paytm, etc.)
+                    <br />• Look for the transaction reference number
+                    <br />• It's a 12-digit number (no letters)
+                    <br />• Example: 123456789012
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

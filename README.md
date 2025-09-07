@@ -92,6 +92,28 @@ function doPost(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheets()[0];
   const data = JSON.parse(e.postData.contents);
+
+  // Find column indexes by header
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  function col(name) { return headers.indexOf(name) + 1; }
+
+  // Ensure headers exist (run once)
+  const required = [
+    'timestamp','fullName','email','phone','college','rollNo','section',
+    'selectedEvents','totalAmount','transactionRef','paidAtIso','upiTxnId','screenshotBase64','dupFlag'
+  ];
+  if (!headers || headers.length === 0 || required.some(h => headers.indexOf(h) === -1)) {
+    sheet.getRange(1,1,1,required.length).setValues([required]);
+  }
+
+  // Check duplicate UPI Txn ID
+  let dupFlag = '';
+  if (data.upiTxnId) {
+    const upiCol = col('upiTxnId');
+    const txns = sheet.getRange(2, upiCol, Math.max(sheet.getLastRow()-1,0), 1).getValues().flat();
+    if (txns.includes(data.upiTxnId)) dupFlag = 'Duplicate/Fraud';
+  }
+
   const row = [
     new Date(),
     data.fullName,
@@ -103,10 +125,13 @@ function doPost(e) {
     (data.selectedEvents || []).join(','),
     data.totalAmount,
     data.transactionRef,
-    data.paidAtIso || ''
+    data.paidAtIso || '',
+    data.upiTxnId || '',
+    data.screenshotBase64 || '',
+    dupFlag
   ];
   sheet.appendRow(row);
-  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+  return ContentService.createTextOutput(JSON.stringify({ ok: true, dupFlag }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 ```
