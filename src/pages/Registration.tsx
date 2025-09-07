@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import { buildUpiIntentUrl, generateTransactionRef } from "@/lib/payments";
 import { postRegistrationToSheets } from "@/lib/sheets";
+import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
 import Footer from "@/components/Footer";
 import qrStatic from "@/pages/1343c33b-2a08-4fc1-8540-ccf73c77131b.jpg";
 
@@ -106,18 +107,93 @@ const Registration = () => {
   // No direct payment button now; users scan the static QR and then confirm
 
   const handleConfirmPayment = async () => {
+    // Validate required fields
+    if (!formData.fullName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your full name",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.phone.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.college.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your college name",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.rollNo.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your roll number",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!formData.section.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your section",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!upiTxnId.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter your 12-digit UTR ID",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (upiTxnId.trim().length !== 12 || !/^\d{12}$/.test(upiTxnId.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "UTR ID must be exactly 12 digits",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (selectedEvents.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please select at least one event",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const confirmed = window.confirm("Have you completed the payment in Google Pay?");
     if (!confirmed) return;
     setIsLoading(true);
     try {
       const totalAmount = getTotalAmount();
       const transactionRef = generateTransactionRef();
+      const paidAtIso = new Date().toISOString();
       const payload = {
         ...formData,
         selectedEvents,
         totalAmount,
         transactionRef,
-        paidAtIso: new Date().toISOString(),
+        paidAtIso,
         upiTxnId: upiTxnId.trim() || undefined,
       };
 
@@ -136,9 +212,27 @@ const Registration = () => {
       const result = await res.json();
       console.log("Success response:", result);
 
+      // Generate and download PDF receipt
+      const receiptData: ReceiptData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        college: formData.college,
+        rollNo: formData.rollNo,
+        section: formData.section,
+        selectedEvents,
+        totalAmount,
+        transactionRef,
+        upiTxnId: upiTxnId.trim(),
+        paidAtIso,
+      };
+
+      // Generate PDF receipt
+      generateReceiptPDF(receiptData);
+
       toast({
         title: "Registration submitted",
-        description: "Your details have been recorded successfully.",
+        description: "Your details have been recorded successfully. Receipt downloaded!",
       });
     } catch (error) {
       console.error("Error submitting to sheets:", error);
@@ -183,6 +277,7 @@ const Registration = () => {
                       onChange={handleInputChange}
                       required
                       className="mt-1"
+                      placeholder="Enter your full name"
                     />
                   </div>
                   <div>
@@ -195,6 +290,7 @@ const Registration = () => {
                       onChange={handleInputChange}
                       required
                       className="mt-1"
+                      placeholder="Enter your email address"
                     />
                   </div>
                   <div>
@@ -207,6 +303,7 @@ const Registration = () => {
                       onChange={handleInputChange}
                       required
                       className="mt-1"
+                      placeholder="Enter your phone number"
                     />
                   </div>
                   <div>
@@ -218,6 +315,7 @@ const Registration = () => {
                       onChange={handleInputChange}
                       required
                       className="mt-1"
+                      placeholder="Enter your college name"
                     />
                   </div>
                   <div>
@@ -229,6 +327,7 @@ const Registration = () => {
                       onChange={handleInputChange}
                       required
                       className="mt-1"
+                      placeholder="Enter your roll number"
                     />
                   </div>
                   <div>
@@ -240,6 +339,7 @@ const Registration = () => {
                       onChange={handleInputChange}
                       required
                       className="mt-1"
+                      placeholder="Enter your section"
                     />
                   </div>
                 </div>
@@ -308,8 +408,8 @@ const Registration = () => {
             {/* Payment Proof */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-2xl text-gradient">Payment Proof</CardTitle>
-                <CardDescription>Enter 12-digit UTR ID from your payment</CardDescription>
+                <CardTitle className="text-2xl text-gradient">Payment Proof *</CardTitle>
+                <CardDescription>Enter 12-digit UTR ID from your payment (Required)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -353,7 +453,7 @@ const Registration = () => {
                 <Button
                   type="button"
                   variant="secondary"
-                  disabled={isLoading || getTotalAmount() <= 0}
+                  disabled={isLoading || getTotalAmount() <= 0 || !formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.college.trim() || !formData.rollNo.trim() || !formData.section.trim() || !upiTxnId.trim() || upiTxnId.trim().length !== 12 || !/^\d{12}$/.test(upiTxnId.trim()) || selectedEvents.length === 0}
                   onClick={handleConfirmPayment}
                 >
                   {isLoading ? "Submitting..." : "I have completed the payment"}
