@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,7 +6,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
+import { generateTransactionRef } from "@/lib/payments";
+import { postRegistrationToSheets } from "@/lib/sheets";
 import Footer from "@/components/Footer";
+import qrStatic from "@/pages/1343c33b-2a08-4fc1-8540-ccf73c77131b.jpg";
 
 const events = {
   technical: [
@@ -38,6 +41,7 @@ const Registration = () => {
   });
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -56,12 +60,23 @@ const Registration = () => {
   };
 
   const handleEventToggle = (eventId: string) => {
-    setSelectedEvents(prev => 
-      prev.includes(eventId) 
+    setSelectedEvents(prev =>
+      prev.includes(eventId)
         ? prev.filter(id => id !== eventId)
         : [...prev, eventId]
     );
   };
+
+  // Set static QR when total > 0
+  useEffect(() => {
+    const totalAmount = getTotalAmount();
+    if (totalAmount <= 0) {
+      setQrDataUrl(null);
+      return;
+    }
+    setQrDataUrl(qrStatic as unknown as string);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedEvents, formData.fullName]);
 
   const getTotalAmount = () => {
     return [...events.technical, ...events.nonTechnical]
@@ -69,31 +84,30 @@ const Registration = () => {
       .reduce((total, event) => total + event.price, 0);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (selectedEvents.length === 0) {
-      toast({
-        title: "No events selected",
-        description: "Please select at least one event to participate in.",
-        variant: "destructive",
-      });
-      return;
-    }
+  // No direct payment button now; users scan the static QR and then confirm
 
+  const handleConfirmPayment = async () => {
+    const confirmed = window.confirm("Have you completed the payment in Google Pay?");
+    if (!confirmed) return;
     setIsLoading(true);
-    
-    // Simulate registration process
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Registration Successful! 🎉",
-        description: `You've registered for ${selectedEvents.length} event(s). Total amount: ₹${getTotalAmount()}. Redirecting to payment...`,
+    try {
+      const totalAmount = getTotalAmount();
+      const transactionRef = generateTransactionRef();
+      const res = await postRegistrationToSheets({
+        ...formData,
+        selectedEvents,
+        totalAmount,
+        transactionRef,
+        paidAtIso: new Date().toISOString(),
       });
-      
-      // Here you would integrate with Razorpay
-      console.log("Registration Data:", { formData, selectedEvents, totalAmount: getTotalAmount() });
-    }, 2000);
+      if (!res.ok) throw new Error(`Sheets error: ${res.status}`);
+      toast({
+        title: "Registration submitted",
+        description: "Your details have been recorded successfully.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -109,7 +123,7 @@ const Registration = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
             {/* Personal Information */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
@@ -249,16 +263,29 @@ const Registration = () => {
               </CardContent>
             </Card>
 
-            {/* Submit Button */}
-            <div className="text-center">
-              <Button
-                type="submit"
-                size="lg"
-                disabled={isLoading}
-                className="bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold px-8 py-3 pulse-glow"
-              >
-                {isLoading ? "Processing..." : "Register Now"}
-              </Button>
+            {/* Static QR + Confirm */}
+            <div className="flex items-center justify-center gap-6 flex-wrap">
+              {qrDataUrl && (
+                <div className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-muted/30">
+                  <img src={qrDataUrl} alt="UPI QR" className="w-[220px] h-[220px] object-contain" />
+                  <div className="text-sm text-muted-foreground text-center">
+                    UPI ID: <span className="font-medium">raghavap1115-1@okicici</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground text-center">
+                    Amount for selected events: ₹{getTotalAmount()}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isLoading || getTotalAmount() <= 0}
+                  onClick={handleConfirmPayment}
+                >
+                  {isLoading ? "Submitting..." : "I have completed the payment"}
+                </Button>
+              </div>
             </div>
           </form>
         </div>

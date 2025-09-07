@@ -60,6 +60,73 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Payments + Google Sheets Setup
+
+Add a simple UPI payment flow with Google Pay and store successful registrations in Google Sheets.
+
+### Environment variables
+
+Create a `.env` (or `.env.local`) in the project root:
+
+```
+VITE_UPI_VPA=your-vpa@okbank
+VITE_UPI_NAME=Your Payee Name
+VITE_SHEETS_WEBHOOK_URL=https://script.google.com/macros/s/DEPLOYMENT_ID/exec
+```
+
+Notes:
+- `VITE_UPI_VPA`: The UPI VPA that receives payments.
+- `VITE_UPI_NAME`: Display name for the payee in UPI apps.
+- `VITE_SHEETS_WEBHOOK_URL`: Google Apps Script Web App URL (see below).
+
+Restart the dev server after changing env vars.
+
+### Google Apps Script (Sheets)
+
+1. Create a new Google Sheet with a first row containing headers like:
+   `timestamp, fullName, email, phone, college, rollNo, section, selectedEvents, totalAmount, transactionRef, paidAtIso`
+2. Open Extensions → Apps Script and paste the following minimal script:
+
+```javascript
+function doPost(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheets()[0];
+  const data = JSON.parse(e.postData.contents);
+  const row = [
+    new Date(),
+    data.fullName,
+    data.email,
+    data.phone,
+    data.college,
+    data.rollNo,
+    data.section,
+    (data.selectedEvents || []).join(','),
+    data.totalAmount,
+    data.transactionRef,
+    data.paidAtIso || ''
+  ];
+  sheet.appendRow(row);
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+3. Deploy → New deployment → Select type “Web app”.
+   - Execute as: Me
+   - Who has access: Anyone with the link
+   - Copy the Web App URL and set it to `VITE_SHEETS_WEBHOOK_URL`.
+
+### App flow
+
+- On Registration, selecting events computes the total.
+- Clicking “Pay with Google Pay (UPI)” opens a UPI intent (tez:// / upi://). On desktop it opens in a new tab; on mobile it launches the app if installed.
+- After paying, click “I have completed the payment” to submit participant details to Google Sheets using the Apps Script URL.
+
+Files involved:
+- `src/lib/payments.ts`: builds UPI intent URLs and helpers.
+- `src/lib/sheets.ts`: posts JSON to Apps Script endpoint.
+- `src/pages/Registration.tsx`: integrates the payment + submission flow.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/19ff58a5-9823-4bb0-bb8a-d483c3fc34de) and click on Share -> Publish.
