@@ -12,6 +12,21 @@ export type RegistrationPayload = {
   upiTxnId?: string;
 };
 
+// Optional server-side UTR existence check. Expects Apps Script to return { exists: boolean }
+export async function checkUtrExists(upiTxnId: string): Promise<boolean> {
+  const checkEndpoint = (import.meta as any).env?.VITE_SHEETS_CHECK_UTR_URL;
+  if (!checkEndpoint) return false;
+  try {
+    const url = `${checkEndpoint}?upiTxnId=${encodeURIComponent(upiTxnId)}`;
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return Boolean(data?.exists);
+  } catch {
+    return false;
+  }
+}
+
 export async function postRegistrationToSheets(payload: RegistrationPayload): Promise<Response> {
   const endpoint = (import.meta as any).env?.VITE_SHEETS_WEBHOOK_URL;
   if (!endpoint) throw new Error("Missing VITE_SHEETS_WEBHOOK_URL env var");
@@ -31,6 +46,7 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
     transactionRef: payload.transactionRef,
     paidAtIso: payload.paidAtIso || '',
     upiTxnId: payload.upiTxnId || '',
+    flagIfDuplicate: '1',
   });
 
   const url = `${endpoint}?${params.toString()}`;

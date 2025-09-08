@@ -29,7 +29,7 @@ const Index = () => {
               VSM College of Engineering's Premier Tech Festival
             </p>
             <p className="text-lg md:text-xl text-muted-foreground mb-12 font-medium">
-              September 17 & 18, 2025
+              September 18 & 19, 2025
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
@@ -79,7 +79,7 @@ const Index = () => {
                   Event Dates
                 </h3>
                 <p className="text-lg text-muted-foreground mb-2">
-                  September 17 & 18
+                  September 18 & 19
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Two full days of excitement
@@ -107,7 +107,7 @@ const Index = () => {
                   Open for All
                 </h3>
                 <p className="text-lg text-muted-foreground mb-2">
-                  Students from VSM College
+                  Open to students from all colleges
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Compete with the best minds
@@ -257,11 +257,25 @@ const Index = () => {
               <h4 className="font-semibold mb-3">Developers</h4>
               <div className="space-y-3 text-muted-foreground">
                 <div>
-                  <p className="font-medium">R Karthikeya</p>
+                  <a
+                    href="https://www.linkedin.com/in/karthikeya-r"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:text-primary smooth-transition"
+                  >
+                    R Karthikeya
+                  </a>
                   <p className="text-sm">CEO and Founder of UptoMo</p>
                 </div>
                 <div>
-                  <p className="font-medium">Raghava</p>
+                  <a
+                    href="https://www.linkedin.com/in/pasupuleti-jaya-raghavendrra-swame"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium hover:text-primary smooth-transition"
+                  >
+                    Raghava
+                  </a>
                   <p className="text-sm">Co-founder and Developer</p>
                 </div>
               </div>

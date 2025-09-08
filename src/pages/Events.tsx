@@ -4,7 +4,18 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { Code, Palette, Gamepad2, Camera, Trophy } from "lucide-react";
 import eventBg from "@/assets/event-card-bg.jpg";
+import heroImage from "@/assets/cache-2025-hero.jpg";
 import Footer from "@/components/Footer";
+import imgWeb from "@/assets/events/web.jpeg";
+import imgPoster from "@/assets/events/poster.jpeg";
+import imgTechExpo from "@/assets/events/techexpo.jpg";
+import imgPython from "@/assets/events/python.jpeg";
+import imgTechQuiz from "@/assets/events/techquiz.jpg";
+import imgPhotography from "@/assets/events/photography.jpg";
+import imgFreeFire from "@/assets/events/freefire.jpeg";
+import imgDrawing from "@/assets/events/drawing.jpeg";
+import imgBgmi from "@/assets/events/bgmi.webp";
+import imgMeme from "@/assets/events/meme.jpeg";
 
 const technicalEvents = [
   {
@@ -71,7 +82,7 @@ const nonTechnicalEvents = [
     title: "BGMI Esports Tournament",
     description: "Join the ultimate mobile gaming championship and prove your tactical skills in BGMI battles.",
     icon: Gamepad2,
-    price: 250
+    price: 100
   },
   {
     id: "meme-contest",
@@ -82,15 +93,30 @@ const nonTechnicalEvents = [
   }
 ];
 
+// Per-event uploaded images
+const EVENT_IMAGE_MAP: Record<string, string> = {
+  'web-dev': imgWeb,
+  'poster': imgPoster,
+  'tech-expo': imgTechExpo,
+  'pymaster': imgPython,
+  'tech-quiz': imgTechQuiz,
+  'photography': imgPhotography,
+  'free-fire': imgFreeFire,
+  'drawing': imgDrawing,
+  'bgmi': imgBgmi,
+  'meme-contest': imgMeme,
+};
+
 const EventCard = ({ event, category }: { event: any; category: 'technical' | 'nonTechnical' }) => {
   const IconComponent = event.icon;
   const categoryColor = category === 'technical' ? 'primary' : 'secondary';
+  const backgroundImage = EVENT_IMAGE_MAP[event.id] || eventBg || heroImage;
   
   return (
     <Card className="group card-gradient border-border hover:scale-105 smooth-transition overflow-hidden">
       <div 
         className="h-48 bg-cover bg-center relative"
-        style={{ backgroundImage: `url(${eventBg})` }}
+        style={{ backgroundImage: `url(${backgroundImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/80 to-transparent"></div>
         <div className="absolute bottom-4 left-4">

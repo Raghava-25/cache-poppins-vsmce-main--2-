@@ -32,7 +32,7 @@ const About = () => {
             <CardContent className="pt-6">
               <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Event Dates</h3>
-              <p className="text-muted-foreground">Sep 17 & 18, 2025</p>
+              <p className="text-muted-foreground">Sep 18 & 19, 2025</p>
             </CardContent>
           </Card>
 
@@ -50,7 +50,7 @@ const About = () => {
             <CardContent className="pt-6">
               <Users className="w-12 h-12 text-accent mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Participants</h3>
-              <p className="text-muted-foreground">Students from VSM College</p>
+              <p className="text-muted-foreground">Open to students from all colleges</p>
             </CardContent>
           </Card>
 

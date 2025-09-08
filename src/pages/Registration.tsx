@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -7,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
 import { buildUpiIntentUrl, generateTransactionRef } from "@/lib/payments";
-import { postRegistrationToSheets } from "@/lib/sheets";
+import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
 import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
 import Footer from "@/components/Footer";
 import qrStatic from "@/pages/1343c33b-2a08-4fc1-8540-ccf73c77131b.jpg";
@@ -24,7 +25,7 @@ const events = {
     { id: 'photography', name: 'Photography Contest', price: 150 },
     { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200 },
     { id: 'drawing', name: 'Live Drawing', price: 100 },
-    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 1 },
+    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 100 },
     { id: 'meme-contest', name: 'Tech Meme Contest', price: 50 },
   ],
 };
@@ -44,6 +45,9 @@ const Registration = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [upiTxnId, setUpiTxnId] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [isOcrChecking, setIsOcrChecking] = useState(false);
+  const [proofInputKey, setProofInputKey] = useState(0);
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -124,10 +128,27 @@ const Registration = () => {
       });
       return;
     }
+    // Enforce gmail.com emails only
+    if (!/^[A-Za-z0-9._%+-]+@gmail\.com$/i.test(formData.email.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Email must end with gmail.com",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!formData.phone.trim()) {
       toast({
         title: "Validation Error",
         description: "Please enter your phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!/^\d{10}$/.test(formData.phone.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Phone number must be exactly 10 digits.",
         variant: "destructive",
       });
       return;
@@ -172,6 +193,21 @@ const Registration = () => {
       });
       return;
     }
+    // Fraud check: prevent duplicate UTR usage on this device
+    try {
+      const usedUtrRaw = localStorage.getItem("usedUtrIds");
+      const usedUtrIds: string[] = usedUtrRaw ? JSON.parse(usedUtrRaw) : [];
+      if (usedUtrIds.includes(upiTxnId.trim())) {
+        toast({
+          title: "Fraud Detected",
+          description: "This UTR ID has already been used.",
+          variant: "destructive",
+        });
+        return;
+      }
+    } catch {
+      // ignore localStorage JSON errors
+    }
     if (selectedEvents.length === 0) {
       toast({
         title: "Validation Error",
@@ -185,6 +221,63 @@ const Registration = () => {
     if (!confirmed) return;
     setIsLoading(true);
     try {
+      // OCR check: verify that the uploaded proof contains the exact 12-digit UTR
+      if (!proofFile) {
+        toast({ title: "Validation Error", description: "Please upload payment proof.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+      setIsOcrChecking(true);
+      try {
+        // Tesseract is loaded globally via script tag
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const T: any = (window as any).Tesseract;
+        if (!T?.createWorker) throw new Error("OCR unavailable");
+        const worker = await T.createWorker();
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        const imageUrl = URL.createObjectURL(proofFile);
+        const { data } = await worker.recognize(imageUrl);
+        await worker.terminate();
+        URL.revokeObjectURL(imageUrl);
+        const text = String(data?.text || "");
+        // Prefer labeled 12-digit patterns first (UTR:, UPI transaction ID:)
+        const labeledMatch = text.match(/(?:UTR\s*[:#-]?|UPI\s*transaction\s*ID\s*[:#-]?)[^\d]*(\d{12})/i);
+        const foundMatch = (labeledMatch?.[1]) || (text.match(/\b\d{12}\b/g) || []).find(Boolean);
+        if (!foundMatch) {
+          toast({ title: "Verification Failed", description: "Could not detect a 12-digit UTR in the screenshot.", variant: "destructive" });
+          setIsOcrChecking(false);
+          setIsLoading(false);
+          return;
+        }
+        if (foundMatch !== upiTxnId.trim()) {
+          toast({ title: "Verification Failed", description: "Uploaded proof UTR does not match the entered UTR.", variant: "destructive" });
+          setIsOcrChecking(false);
+          setIsLoading(false);
+          return;
+        }
+
+      } catch (err) {
+        // Block submission on OCR errors and keep the form data
+        toast({ title: "Verification Error", description: "We couldn't verify the UTR from the screenshot. Please try a clearer image.", variant: "destructive" });
+        setIsOcrChecking(false);
+        setIsLoading(false);
+        return;
+      } finally {
+        setIsOcrChecking(false);
+      }
+      // Optional pre-check (non-blocking): warn if UTR already exists server-side, but do not block
+      try {
+        const exists = await checkUtrExists(upiTxnId.trim());
+        if (exists) {
+          toast({
+            title: "Notice",
+            description: "This UTR appears in our records. If incorrect, we will verify manually.",
+          });
+        }
+      } catch {}
+
       const totalAmount = getTotalAmount();
       const transactionRef = generateTransactionRef();
       const paidAtIso = new Date().toISOString();
@@ -234,6 +327,31 @@ const Registration = () => {
         title: "Registration submitted",
         description: "Your details have been recorded successfully. Receipt downloaded!",
       });
+
+      // Mark UTR as used (client-side) to deter reuse on this device
+      try {
+        const usedUtrRaw = localStorage.getItem("usedUtrIds");
+        const usedUtrIds: string[] = usedUtrRaw ? JSON.parse(usedUtrRaw) : [];
+        usedUtrIds.push(upiTxnId.trim());
+        localStorage.setItem("usedUtrIds", JSON.stringify(usedUtrIds));
+      } catch {
+        // ignore storage errors
+      }
+
+      // Reset the form after successful submission and PDF download
+      setFormData({
+        fullName: '',
+        email: '',
+        phone: '',
+        college: '',
+        rollNo: '',
+        section: '',
+      });
+      setSelectedEvents([]);
+      setUpiTxnId("");
+      setQrDataUrl(null);
+      setProofFile(null);
+      setProofInputKey((k) => k + 1);
     } catch (error) {
       console.error("Error submitting to sheets:", error);
       toast({
@@ -255,8 +373,18 @@ const Registration = () => {
               Register for Cache 2025
             </h1>
             <p className="text-xl text-muted-foreground">
-              Join us for the ultimate tech fest experience on Sep 17 & 18
+              Join us for the ultimate tech fest experience on Sep 18 & 19
             </p>
+          </div>
+
+          {/* Notice */}
+          <div className="mb-8 animate-fade-in">
+            <Alert className="card-gradient border-border">
+              <AlertTitle className="text-lg font-semibold">Notice</AlertTitle>
+              <AlertDescription className="text-muted-foreground">
+                Please keep your payment transaction screenshot ready. You must show it along with your ticket before entering any event.
+              </AlertDescription>
+            </Alert>
           </div>
 
           <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
@@ -300,10 +428,16 @@ const Registration = () => {
                       name="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        setFormData(prev => ({ ...prev, phone: digitsOnly }));
+                      }}
                       required
+                      inputMode="numeric"
+                      maxLength={10}
+                      pattern="[0-9]{10}"
                       className="mt-1"
-                      placeholder="Enter your phone number"
+                      placeholder="Enter 10-digit phone number"
                     />
                   </div>
                   <div>
@@ -432,6 +566,22 @@ const Registration = () => {
                     <br />• It's a 12-digit number (no letters)
                     <br />• Example: 123456789012
                   </div>
+                </div>
+                <div>
+                  <Label htmlFor="upiProof">Upload Payment Proof (screenshot) *</Label>
+                  <Input
+                    key={proofInputKey}
+                    id="upiProof"
+                    name="upiProof"
+                    type="file"
+                    accept="image/*"
+                    className="mt-1"
+                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ensure the screenshot clearly shows the 12-digit UTR ID.
+                  </p>
                 </div>
               </CardContent>
             </Card>

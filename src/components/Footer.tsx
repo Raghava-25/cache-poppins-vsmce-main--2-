@@ -50,11 +50,25 @@ const Footer = () => {
             <h4 className="font-semibold mb-3">Developers</h4>
             <div className="space-y-3 text-muted-foreground">
               <div>
-                <p className="font-medium">R Karthikeya</p>
+                <a
+                  href="https://www.linkedin.com/in/karthikeya-r"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium hover:text-primary smooth-transition"
+                >
+                  R Karthikeya
+                </a>
                 <p className="text-sm">CEO and Founder of UptoMo</p>
               </div>
               <div>
-                <p className="font-medium">Raghava</p>
+                <a
+                  href="https://www.linkedin.com/in/pasupuleti-jaya-raghavendrra-swame"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium hover:text-primary smooth-transition"
+                >
+                  Raghava
+                </a>
                 <p className="text-sm">Co-founder and Developer</p>
               </div>
             </div>
