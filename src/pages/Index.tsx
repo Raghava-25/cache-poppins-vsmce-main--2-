@@ -263,7 +263,7 @@ const Index = () => {
                     rel="noopener noreferrer"
                     className="font-medium underline hover:text-primary smooth-transition"
                   >
-                    R Karthikeya
+                    Karthikeya Raparla
                   </a>
                   <p className="text-sm">CEO and Founder of UptoMo</p>
                 </div>
@@ -274,7 +274,7 @@ const Index = () => {
                     rel="noopener noreferrer"
                     className="font-medium underline hover:text-primary smooth-transition"
                   >
-                    Raghava
+                    Raghavendrra Pasupuleti
                   </a>
                   <p className="text-sm">Co-founder and Developer</p>
                 </div>
