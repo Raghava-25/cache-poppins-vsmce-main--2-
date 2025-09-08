@@ -4,12 +4,12 @@ import Footer from "@/components/Footer";
 
 // Import profile images
 import abhivanImage from "@/assets/organizers/abhivan-charan.png";
-import nagaDurgaImage from "@/assets/organizers/naga-durga.jpg";
-import vinodImage from "@/assets/organizers/vinod.jpg";
-import muraliImage from "@/assets/organizers/murali.jpg";
-import raghavaImage from "@/assets/organizers/raghava.jpg";
-import zaheerImage from "@/assets/organizers/zaheer.jpg";
-import kranthImage from "@/assets/organizers/kranth.jpg";
+import nagaDurgaImage from "@/assets/organizers/naga-durga.png";
+import vinodImage from "@/assets/organizers/vinod.png";
+import muraliImage from "@/assets/organizers/murali.png";
+import raghavaImage from "@/assets/organizers/raghava.png";
+import zaheerImage from "@/assets/organizers/jaheer.png";
+import kranthImage from "@/assets/organizers/hemanth.png";
 
 const organizers = [
   { name: "Abhiram Charan", role: "Event Coordinator", image: abhivanImage },

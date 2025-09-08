@@ -40,7 +40,7 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold mb-3">Contact Us</h4>
             <div className="space-y-2 text-muted-foreground">
-              <p>karthik8179950933@gmail.com</p>
+              <p>raghavap1116@gmail.com</p>
               <p>VSM College of Engineering</p>
               <p>Ramachandrapuram, Andhra Pradesh</p>
             </div>

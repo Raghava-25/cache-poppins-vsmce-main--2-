@@ -107,7 +107,7 @@ const Index = () => {
                   Open for All
                 </h3>
                 <p className="text-lg text-muted-foreground mb-2">
-                  Students from All Colleges
+                  Students from VSM College
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Compete with the best minds
@@ -247,7 +247,7 @@ const Index = () => {
             <div>
               <h4 className="font-semibold mb-3">Contact Us</h4>
               <div className="space-y-2 text-muted-foreground">
-                <p>karthik8179950933@gmail.com</p>
+                <p>raghavap1116@gmail.com</p>
                 <p>VSM College of Engineering</p>
                 <p>Ramachandrapuram, Andhra Pradesh</p>
               </div>
