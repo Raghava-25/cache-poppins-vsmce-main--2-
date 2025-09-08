@@ -261,7 +261,7 @@ const Index = () => {
                     href="https://www.linkedin.com/in/karthikeya-r"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium hover:text-primary smooth-transition"
+                    className="font-medium underline hover:text-primary smooth-transition"
                   >
                     R Karthikeya
                   </a>
@@ -272,7 +272,7 @@ const Index = () => {
                     href="https://www.linkedin.com/in/pasupuleti-jaya-raghavendrra-swame"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-medium hover:text-primary smooth-transition"
+                    className="font-medium underline hover:text-primary smooth-transition"
                   >
                     Raghava
                   </a>
