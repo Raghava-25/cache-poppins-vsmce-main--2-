@@ -284,7 +284,7 @@ const Index = () => {
 
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
             <p>
-              &copy; 2025 Cache 2025, VSM College of Engineering. All rights
+              &copy;  Cache 2025, <a href="https://uptomo.vercel.app/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">UptoMo Web Solutions</a>. All rights
               reserved.
             </p>
           </div>
