@@ -145,15 +145,14 @@ const Registration = () => {
         currency: 'INR' as const,
       };
 
-      // For iOS, show UPI details and copy to clipboard
       if (isIOS()) {
-        // Copy UPI details to clipboard for iOS users
+        // For iOS: Copy UPI details to clipboard
         const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
         
         navigator.clipboard.writeText(upiDetails).then(() => {
           toast({
             title: "UPI Details Copied",
-            description: "UPI details copied to clipboard. Please open your UPI app manually and paste the details.",
+            description: "UPI details copied to clipboard. Open your UPI app and paste the details.",
           });
         }).catch(() => {
           // Fallback if clipboard API fails
@@ -162,16 +161,8 @@ const Registration = () => {
             description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
           });
         });
-        
-        // Also try to open UPI app (may not work on iOS)
-        try {
-          const upiUrl = buildUpiIntentUrl(paymentParams);
-          window.location.href = upiUrl;
-        } catch (error) {
-          // Ignore error, we already copied details to clipboard
-        }
       } else {
-        // For Android, use the standard approach
+        // For Android: Open UPI app directly
         const upiUrl = buildUpiIntentUrl(paymentParams);
         window.open(upiUrl, '_blank');
       }
@@ -182,7 +173,7 @@ const Registration = () => {
       toast({
         title: isIOS() ? "UPI Details Copied" : "Opening UPI App",
         description: isIOS() 
-          ? "UPI details copied to clipboard. Open your UPI app and paste the details to make payment."
+          ? "Open your UPI app and paste the details to make payment."
           : "Complete the payment and return to this page",
       });
     } catch (error) {
@@ -643,8 +634,8 @@ const Registration = () => {
                         {awaitingUpiReturn 
                           ? "Complete the payment in your UPI app and return here"
                           : isIOS() 
-                            ? "UPI details will be copied to clipboard for manual entry"
-                            : `Opens your UPI app with the correct amount: ₹${getTotalAmount()}`
+                            ? "UPI details will be copied to clipboard"
+                            : `Opens your UPI app with amount: ₹${getTotalAmount()}`
                         }
                       </p>
                       
