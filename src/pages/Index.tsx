@@ -22,7 +22,7 @@ const Index = () => {
           loop
           playsInline
         >
-          <source src="/src/assets/videos/1.mp4" type="video/mp4" />
+          <source src="/1.mp4" type="video/mp4" />
           {/* Fallback to image if video fails to load */}
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
