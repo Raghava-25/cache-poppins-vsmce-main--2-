@@ -15,17 +15,17 @@ import qrStatic from "@/pages/1343c33b-2a08-4fc1-8540-ccf73c77131b.jpg";
 
 const events = {
   technical: [
-    { id: 'web-dev', name: 'Web Development Challenge', price: 200 },
+    { id: 'web-dev', name: 'Web Development Challenge', price: 100 },
     { id: 'poster', name: 'Poster Presentation', price: 100 },
-    { id: 'tech-expo', name: 'Tech Expo', price: 300 },
-    { id: 'pymaster', name: 'PyMaster Contest', price: 150 },
+    { id: 'tech-expo', name: 'Tech Expo', price: 100 },
+    { id: 'pymaster', name: 'PyMaster Contest', price: 50 },
     { id: 'tech-quiz', name: 'Technical Quiz', price: 100 },
   ],
   nonTechnical: [
-    { id: 'photography', name: 'Photography Contest', price: 150 },
+    { id: 'photography', name: 'Photography Contest', price: 50 },
     { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200 },
-    { id: 'drawing', name: 'Live Drawing', price: 100 },
-    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 100 },
+    { id: 'drawing', name: 'Live Drawing', price: 50 },
+    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 200 },
     { id: 'meme-contest', name: 'Tech Meme Contest', price: 50 },
   ],
 };

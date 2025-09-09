@@ -13,6 +13,7 @@ export const Navigation = () => {
     { href: "/about", label: "About" },
     { href: "/events", label: "Events" },
     { href: "/organizers", label: "Organizers" },
+    { href: "/rules", label: "Rules" },
   ];
 
   const isActive = (href: string) => {

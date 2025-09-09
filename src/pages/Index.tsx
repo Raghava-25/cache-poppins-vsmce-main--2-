@@ -236,6 +236,12 @@ const Index = () => {
                   Organizers
                 </Link>
                 <Link
+                  to="/rules"
+                  className="block text-muted-foreground hover:text-primary smooth-transition"
+                >
+                  Rules
+                </Link>
+                <Link
                   to="/registration"
                   className="block text-muted-foreground hover:text-primary smooth-transition"
                 >

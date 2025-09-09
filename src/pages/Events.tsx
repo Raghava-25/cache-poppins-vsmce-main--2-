@@ -23,7 +23,7 @@ const technicalEvents = [
     title: "Web Development Challenge",
     description: "Build innovative web applications using modern frameworks and showcase your frontend and backend skills.",
     icon: Code,
-    price: 200
+    price: 100
   },
   {
     id: "poster",
@@ -37,14 +37,14 @@ const technicalEvents = [
     title: "Tech Expo",
     description: "Demonstrate your innovative projects and technical solutions to a panel of industry experts.",
     icon: Trophy,
-    price: 300
+    price: 100
   },
   {
     id: "pymaster",
     title: "PyMaster Contest",
     description: "Test your Python programming skills with challenging algorithms and data structure problems.",
     icon: Code,
-    price: 150
+    price: 50
   },
   {
     id: "tech-quiz",
@@ -61,7 +61,7 @@ const nonTechnicalEvents = [
     title: "Photography Contest",
     description: "Capture the essence of technology and innovation through your lens in this creative photography competition.",
     icon: Camera,
-    price: 150
+    price: 50
   },
   {
     id: "free-fire",
@@ -75,14 +75,14 @@ const nonTechnicalEvents = [
     title: "Live Drawing",
     description: "Express your artistic skills in this live drawing competition with tech-themed creative challenges.",
     icon: Palette,
-    price: 100
+    price: 50
   },
   {
     id: "bgmi",
     title: "BGMI Esports Tournament",
     description: "Join the ultimate mobile gaming championship and prove your tactical skills in BGMI battles.",
     icon: Gamepad2,
-    price: 100
+    price: 200
   },
   {
     id: "meme-contest",
@@ -217,10 +217,10 @@ const Events = () => {
             <h2 className="text-3xl font-bold mb-4 text-gradient">
               Ready to Compete?
             </h2>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Register for multiple events and maximize your chances of winning. 
-              Early registration gets you the best rates!
+            <p className="text-muted-foreground mb-2 max-w-2xl mx-auto">
+              Register for multiple events and maximize your chances of winning.
             </p>
+            <p className="text-sm text-accent mb-6">Exciting rewards for winners and top performers!</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild className="bg-gradient-primary hover:opacity-90 pulse-glow">
                 <Link to="/registration">Register for Events</Link>
