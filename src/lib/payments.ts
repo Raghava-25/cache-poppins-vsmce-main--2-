@@ -27,6 +27,57 @@ export function buildGPayIntentUrl(params: UpiIntentParams): string {
   return base.replace('upi://pay', 'tez://upi/pay');
 }
 
+export function buildPhonePeIntentUrl(params: UpiIntentParams): string {
+  const { payeeVpa, payeeName, amount, transactionNote, transactionRef, currency = 'INR' } = params;
+  const query = new URLSearchParams({
+    pa: payeeVpa,
+    pn: payeeName,
+    am: amount.toFixed(2),
+    tn: transactionNote,
+    tr: transactionRef,
+    cu: currency,
+  });
+  return `phonepe://pay?${query.toString()}`;
+}
+
+export function buildPaytmIntentUrl(params: UpiIntentParams): string {
+  const { payeeVpa, payeeName, amount, transactionNote, transactionRef, currency = 'INR' } = params;
+  const query = new URLSearchParams({
+    pa: payeeVpa,
+    pn: payeeName,
+    am: amount.toFixed(2),
+    tn: transactionNote,
+    tr: transactionRef,
+    cu: currency,
+  });
+  return `paytmmp://pay?${query.toString()}`;
+}
+
+export function buildBhimIntentUrl(params: UpiIntentParams): string {
+  const { payeeVpa, payeeName, amount, transactionNote, transactionRef, currency = 'INR' } = params;
+  const query = new URLSearchParams({
+    pa: payeeVpa,
+    pn: payeeName,
+    am: amount.toFixed(2),
+    tn: transactionNote,
+    tr: transactionRef,
+    cu: currency,
+  });
+  return `bhim://pay?${query.toString()}`;
+}
+
+export function isIOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || navigator.vendor;
+  return /iphone|ipad|ipod/i.test(ua);
+}
+
+export function isAndroid(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || navigator.vendor;
+  return /android/i.test(ua);
+}
+
 export function isLikelyMobile(): boolean {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent || navigator.vendor;

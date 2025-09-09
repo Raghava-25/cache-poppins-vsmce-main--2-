@@ -7,7 +7,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
-import { buildUpiIntentUrl, generateTransactionRef } from "@/lib/payments";
+import { 
+  buildUpiIntentUrl, 
+  buildGPayIntentUrl, 
+  buildPhonePeIntentUrl, 
+  buildPaytmIntentUrl, 
+  buildBhimIntentUrl,
+  generateTransactionRef,
+  isIOS,
+  isAndroid 
+} from "@/lib/payments";
 import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
 import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
 import Footer from "@/components/Footer";
@@ -127,24 +136,64 @@ const Registration = () => {
 
     try {
       const envVars = (import.meta as unknown as { env: Record<string, string | undefined> }).env || {};
-      const upiUrl = buildUpiIntentUrl({
+      const paymentParams = {
         payeeVpa: envVars.VITE_UPI_VPA || "raghavap1115-1@okicici",
         payeeName: envVars.VITE_UPI_NAME || "Raghava P",
         amount: totalAmount,
         transactionNote: `Cache 2025 - ${formData.fullName || "Participant"}`,
         transactionRef: generateTransactionRef(),
-        currency: 'INR',
-      });
+        currency: 'INR' as const,
+      };
 
-      // Open UPI app
-      window.open(upiUrl, '_blank');
+      // For iOS, try multiple UPI apps in sequence
+      if (isIOS()) {
+        const upiApps = [
+          { name: "Google Pay", url: buildGPayIntentUrl(paymentParams) },
+          { name: "PhonePe", url: buildPhonePeIntentUrl(paymentParams) },
+          { name: "Paytm", url: buildPaytmIntentUrl(paymentParams) },
+          { name: "BHIM", url: buildBhimIntentUrl(paymentParams) },
+          { name: "Generic UPI", url: buildUpiIntentUrl(paymentParams) }
+        ];
+
+        // Try to open UPI apps one by one
+        let opened = false;
+        for (const app of upiApps) {
+          try {
+            const openedWindow = window.open(app.url, '_blank');
+            if (openedWindow && !openedWindow.closed) {
+              opened = true;
+              break;
+            }
+          } catch (e) {
+            // Continue to next app
+            continue;
+          }
+        }
+
+        if (!opened) {
+          // Fallback: Show UPI details for manual entry
+          const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
+          navigator.clipboard.writeText(upiDetails).then(() => {
+            toast({
+              title: "UPI Details Copied",
+              description: "UPI details copied to clipboard. Please open your UPI app manually and paste the details.",
+            });
+          });
+        }
+      } else {
+        // For Android, use the standard approach
+        const upiUrl = buildUpiIntentUrl(paymentParams);
+        window.open(upiUrl, '_blank');
+      }
       
       // Set awaiting state
       setAwaitingUpiReturn(true);
       
       toast({
         title: "Opening UPI App",
-        description: "Complete the payment and return to this page",
+        description: isIOS() 
+          ? "Trying to open UPI app. If it doesn't work, UPI details will be copied to clipboard."
+          : "Complete the payment and return to this page",
       });
     } catch (error) {
       toast({
@@ -606,6 +655,21 @@ const Registration = () => {
                           : `Opens your UPI app with the correct amount: ₹${getTotalAmount()}`
                         }
                       </p>
+                      
+                      {/* iOS Manual UPI Details */}
+                      {isIOS() && !awaitingUpiReturn && (
+                        <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
+                          <p className="text-sm font-medium mb-2">For iOS users - Manual UPI Entry:</p>
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <p><strong>UPI ID:</strong> raghavap1115-1@okicici</p>
+                            <p><strong>Amount:</strong> ₹{getTotalAmount()}</p>
+                            <p><strong>Note:</strong> Cache 2025 - {formData.fullName || "Participant"}</p>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            If the button doesn't work, copy these details and open your UPI app manually.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
