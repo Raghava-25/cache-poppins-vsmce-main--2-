@@ -11,7 +11,6 @@ import { buildUpiIntentUrl, generateTransactionRef } from "@/lib/payments";
 import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
 import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
 import Footer from "@/components/Footer";
-import qrStatic from "@/pages/1343c33b-2a08-4fc1-8540-ccf73c77131b.jpg";
 
 const events = {
   technical: [
@@ -43,11 +42,10 @@ const Registration = () => {
   });
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [upiTxnId, setUpiTxnId] = useState("");
-  const [proofFile, setProofFile] = useState<File | null>(null);
-  const [isOcrChecking, setIsOcrChecking] = useState(false);
-  const [proofInputKey, setProofInputKey] = useState(0);
+  const [awaitingUpiReturn, setAwaitingUpiReturn] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
+  const [paymentCompleted, setPaymentCompleted] = useState(false);
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -58,11 +56,46 @@ const Registration = () => {
     }
   }, [location]);
 
+  // Handle visibility change to detect when user returns from UPI app
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && awaitingUpiReturn) {
+        // User returned from UPI app, but payment is not completed until UTR is entered
+        setTimeout(() => {
+          setAwaitingUpiReturn(false);
+          toast({
+            title: "Returned from UPI App",
+            description: "Please enter your 12-digit UTR ID below to complete the payment process.",
+          });
+        }, 500);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [awaitingUpiReturn]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const handleUtrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUpiTxnId(value);
+    
+    // Mark payment as completed when valid UTR is entered
+    if (value.trim().length === 12 && /^\d{12}$/.test(value.trim())) {
+      setPaymentCompleted(true);
+      toast({
+        title: "Payment Completed!",
+        description: "Valid UTR ID entered. You can now download your ticket.",
+      });
+    } else {
+      setPaymentCompleted(false);
+    }
   };
 
   const handleEventToggle = (eventId: string) => {
@@ -74,33 +107,6 @@ const Registration = () => {
   };
 
 
-  // Generate dynamic UPI QR with exact amount; fallback to static image on error
-  useEffect(() => {
-    const totalAmount = getTotalAmount();
-    if (totalAmount <= 0) {
-      setQrDataUrl(null);
-      return;
-    }
-    (async () => {
-      try {
-        const envVars = (import.meta as unknown as { env: Record<string, string | undefined> }).env || {};
-        const upiUrl = buildUpiIntentUrl({
-          payeeVpa: envVars.VITE_UPI_VPA || "raghavap1115-1@okicici",
-          payeeName: envVars.VITE_UPI_NAME || "Raghava P",
-          amount: totalAmount,
-          transactionNote: `Cache 2025 - ${formData.fullName || "Participant"}`,
-          transactionRef: generateTransactionRef(),
-          currency: 'INR',
-        });
-        const mod = await import("qrcode") as { toDataURL: (text: string, options?: { width?: number; margin?: number }) => Promise<string> };
-        const dataUrl: string = await mod.toDataURL(upiUrl, { width: 240, margin: 1 });
-        setQrDataUrl(dataUrl);
-      } catch {
-        setQrDataUrl(qrStatic as unknown as string);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedEvents, formData.fullName]);
 
   const getTotalAmount = () => {
     return [...events.technical, ...events.nonTechnical]
@@ -108,9 +114,50 @@ const Registration = () => {
       .reduce((total, event) => total + event.price, 0);
   };
 
+  const handleUpiPayment = () => {
+    const totalAmount = getTotalAmount();
+    if (totalAmount <= 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one event to proceed with payment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const envVars = (import.meta as unknown as { env: Record<string, string | undefined> }).env || {};
+      const upiUrl = buildUpiIntentUrl({
+        payeeVpa: envVars.VITE_UPI_VPA || "raghavap1115-1@okicici",
+        payeeName: envVars.VITE_UPI_NAME || "Raghava P",
+        amount: totalAmount,
+        transactionNote: `Cache 2025 - ${formData.fullName || "Participant"}`,
+        transactionRef: generateTransactionRef(),
+        currency: 'INR',
+      });
+
+      // Open UPI app
+      window.open(upiUrl, '_blank');
+      
+      // Set awaiting state
+      setAwaitingUpiReturn(true);
+      
+      toast({
+        title: "Opening UPI App",
+        description: "Complete the payment and return to this page",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to open UPI app. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // No direct payment button now; users scan the static QR and then confirm
 
-  const handleConfirmPayment = async () => {
+  const handleDownloadTicket = async () => {
     // Validate required fields
     if (!formData.fullName.trim()) {
       toast({
@@ -217,56 +264,8 @@ const Registration = () => {
       return;
     }
 
-    const confirmed = window.confirm("Have you completed the payment in Google Pay?");
-    if (!confirmed) return;
     setIsLoading(true);
     try {
-      // OCR check: verify that the uploaded proof contains the exact 12-digit UTR
-      if (!proofFile) {
-        toast({ title: "Validation Error", description: "Please upload payment proof.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-      setIsOcrChecking(true);
-      try {
-        // Tesseract is loaded globally via script tag
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const T: any = (window as any).Tesseract;
-        if (!T?.createWorker) throw new Error("OCR unavailable");
-        const worker = await T.createWorker();
-        await worker.load();
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-        const imageUrl = URL.createObjectURL(proofFile);
-        const { data } = await worker.recognize(imageUrl);
-        await worker.terminate();
-        URL.revokeObjectURL(imageUrl);
-        const text = String(data?.text || "");
-        // Prefer labeled 12-digit patterns first (UTR:, UPI transaction ID:)
-        const labeledMatch = text.match(/(?:UTR\s*[:#-]?|UPI\s*transaction\s*ID\s*[:#-]?)[^\d]*(\d{12})/i);
-        const foundMatch = (labeledMatch?.[1]) || (text.match(/\b\d{12}\b/g) || []).find(Boolean);
-        if (!foundMatch) {
-          toast({ title: "Verification Failed", description: "Could not detect a 12-digit UTR in the screenshot.", variant: "destructive" });
-          setIsOcrChecking(false);
-          setIsLoading(false);
-          return;
-        }
-        if (foundMatch !== upiTxnId.trim()) {
-          toast({ title: "Verification Failed", description: "Uploaded proof UTR does not match the entered UTR.", variant: "destructive" });
-          setIsOcrChecking(false);
-          setIsLoading(false);
-          return;
-        }
-
-      } catch (err) {
-        // Block submission on OCR errors and keep the form data
-        toast({ title: "Verification Error", description: "We couldn't verify the UTR from the screenshot. Please try a clearer image.", variant: "destructive" });
-        setIsOcrChecking(false);
-        setIsLoading(false);
-        return;
-      } finally {
-        setIsOcrChecking(false);
-      }
       // Optional pre-check (non-blocking): warn if UTR already exists server-side, but do not block
       try {
         const exists = await checkUtrExists(upiTxnId.trim());
@@ -323,8 +322,11 @@ const Registration = () => {
       // Generate PDF receipt
       generateReceiptPDF(receiptData);
 
+      // Show thank you message
+      setShowThankYou(true);
+
       toast({
-        title: "Registration submitted",
+        title: "🎉 Registration Successful!",
         description: "Your details have been recorded successfully. Receipt downloaded!",
       });
 
@@ -339,19 +341,20 @@ const Registration = () => {
       }
 
       // Reset the form after successful submission and PDF download
-      setFormData({
-        fullName: '',
-        email: '',
-        phone: '',
-        college: '',
-        rollNo: '',
-        section: '',
-      });
-      setSelectedEvents([]);
-      setUpiTxnId("");
-      setQrDataUrl(null);
-      setProofFile(null);
-      setProofInputKey((k) => k + 1);
+      setTimeout(() => {
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          college: '',
+          rollNo: '',
+          section: '',
+        });
+        setSelectedEvents([]);
+        setUpiTxnId("");
+        setShowThankYou(false);
+        setPaymentCompleted(false);
+      }, 3000);
     } catch (error) {
       console.error("Error submitting to sheets:", error);
       toast({
@@ -539,10 +542,10 @@ const Registration = () => {
               </CardContent>
             </Card>
 
-            {/* Payment Proof */}
+            {/* Payment Details */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-2xl text-gradient">Payment Proof *</CardTitle>
+                <CardTitle className="text-2xl text-gradient">Payment Details *</CardTitle>
                 <CardDescription>Enter 12-digit UTR ID from your payment (Required)</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -553,7 +556,7 @@ const Registration = () => {
                     name="upiTxnId"
                     placeholder="e.g., 123456789012"
                     value={upiTxnId}
-                    onChange={(e) => setUpiTxnId(e.target.value)}
+                    onChange={handleUtrChange}
                     className="mt-1"
                     required
                     maxLength={12}
@@ -567,49 +570,87 @@ const Registration = () => {
                     <br />• Example: 123456789012
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="upiProof">Upload Payment Proof (screenshot) *</Label>
-                  <Input
-                    key={proofInputKey}
-                    id="upiProof"
-                    name="upiProof"
-                    type="file"
-                    accept="image/*"
-                    className="mt-1"
-                    onChange={(e) => setProofFile(e.target.files?.[0] || null)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Ensure the screenshot clearly shows the 12-digit UTR ID.
-                  </p>
-                </div>
               </CardContent>
             </Card>
 
-            {/* Static QR + Confirm */}
-            <div className="flex items-center justify-center gap-6 flex-wrap">
-              {qrDataUrl && (
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg border bg-muted/30">
-                  <img src={qrDataUrl} alt="UPI QR" className="w-[220px] h-[220px] object-contain" />
-                  <div className="text-sm text-muted-foreground text-center">
-                    UPI ID: <span className="font-medium">raghavap1115-1@okicici</span>
+            {/* Payment Section */}
+            {selectedEvents.length > 0 && getTotalAmount() > 0 && (
+              <Card className="card-gradient border-border animate-slide-up">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-gradient">Payment</CardTitle>
+                  <CardDescription>
+                    {awaitingUpiReturn 
+                      ? "Waiting for payment completion..."
+                      : paymentCompleted 
+                        ? "Payment completed! You can now download your ticket."
+                        : "Click the button below to pay with your UPI app"
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* UPI Payment Button - Show when not completed */}
+                  {!paymentCompleted && (
+                    <div className="flex flex-col items-center gap-4">
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="w-full max-w-md bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg"
+                        onClick={handleUpiPayment}
+                        disabled={isLoading || awaitingUpiReturn}
+                      >
+                        {awaitingUpiReturn ? "⏳ Waiting for payment..." : "💳 Pay with GPay/UPI"}
+                      </Button>
+                      <p className="text-sm text-muted-foreground text-center">
+                        {awaitingUpiReturn 
+                          ? "Complete the payment in your UPI app and return here"
+                          : `Opens your UPI app with the correct amount: ₹${getTotalAmount()}`
+                        }
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Download Ticket Button - Only shown after payment is completed */}
+                  {paymentCompleted && (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="text-center space-y-2">
+                        <div className="text-4xl">✅</div>
+                        <p className="text-lg font-semibold text-green-600">Payment Completed!</p>
+                        <p className="text-sm text-muted-foreground">
+                          Your UTR ID has been verified. Click below to download your ticket.
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="lg"
+                        className="w-full max-w-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg"
+                        onClick={handleDownloadTicket}
+                        disabled={isLoading}
+                      >
+                        {isLoading ? "Processing..." : "🎫 Download Ticket"}
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Thank You Message */}
+            {showThankYou && (
+              <Card className="card-gradient border-green-500 animate-slide-up">
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-4">
+                    <div className="text-6xl">🎉</div>
+                    <h3 className="text-2xl font-bold text-green-600">Thank You!</h3>
+                    <p className="text-muted-foreground">
+                      Your registration has been submitted successfully. Your ticket has been downloaded automatically.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Please keep your payment screenshot ready to show at the event.
+                    </p>
                   </div>
-                  <div className="text-xs text-muted-foreground text-center">
-                    Amount for selected events: ₹{getTotalAmount()}
-                  </div>
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isLoading || getTotalAmount() <= 0 || !formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.college.trim() || !formData.rollNo.trim() || !formData.section.trim() || !upiTxnId.trim() || upiTxnId.trim().length !== 12 || !/^\d{12}$/.test(upiTxnId.trim()) || selectedEvents.length === 0}
-                  onClick={handleConfirmPayment}
-                >
-                  {isLoading ? "Submitting..." : "I have completed the payment"}
-                </Button>
-              </div>
-            </div>
+                </CardContent>
+              </Card>
+            )}
           </form>
         </div>
       </div>
