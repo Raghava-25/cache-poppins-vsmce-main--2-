@@ -145,40 +145,30 @@ const Registration = () => {
         currency: 'INR' as const,
       };
 
-      // For iOS, try multiple UPI apps in sequence
+      // For iOS, show UPI details and copy to clipboard
       if (isIOS()) {
-        const upiApps = [
-          { name: "Google Pay", url: buildGPayIntentUrl(paymentParams) },
-          { name: "PhonePe", url: buildPhonePeIntentUrl(paymentParams) },
-          { name: "Paytm", url: buildPaytmIntentUrl(paymentParams) },
-          { name: "BHIM", url: buildBhimIntentUrl(paymentParams) },
-          { name: "Generic UPI", url: buildUpiIntentUrl(paymentParams) }
-        ];
-
-        // Try to open UPI apps one by one
-        let opened = false;
-        for (const app of upiApps) {
-          try {
-            const openedWindow = window.open(app.url, '_blank');
-            if (openedWindow && !openedWindow.closed) {
-              opened = true;
-              break;
-            }
-          } catch (e) {
-            // Continue to next app
-            continue;
-          }
-        }
-
-        if (!opened) {
-          // Fallback: Show UPI details for manual entry
-          const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
-          navigator.clipboard.writeText(upiDetails).then(() => {
-            toast({
-              title: "UPI Details Copied",
-              description: "UPI details copied to clipboard. Please open your UPI app manually and paste the details.",
-            });
+        // Copy UPI details to clipboard for iOS users
+        const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
+        
+        navigator.clipboard.writeText(upiDetails).then(() => {
+          toast({
+            title: "UPI Details Copied",
+            description: "UPI details copied to clipboard. Please open your UPI app manually and paste the details.",
           });
+        }).catch(() => {
+          // Fallback if clipboard API fails
+          toast({
+            title: "UPI Payment Details",
+            description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
+          });
+        });
+        
+        // Also try to open UPI app (may not work on iOS)
+        try {
+          const upiUrl = buildUpiIntentUrl(paymentParams);
+          window.location.href = upiUrl;
+        } catch (error) {
+          // Ignore error, we already copied details to clipboard
         }
       } else {
         // For Android, use the standard approach
@@ -190,9 +180,9 @@ const Registration = () => {
       setAwaitingUpiReturn(true);
       
       toast({
-        title: "Opening UPI App",
+        title: isIOS() ? "UPI Details Copied" : "Opening UPI App",
         description: isIOS() 
-          ? "Trying to open UPI app. If it doesn't work, UPI details will be copied to clipboard."
+          ? "UPI details copied to clipboard. Open your UPI app and paste the details to make payment."
           : "Complete the payment and return to this page",
       });
     } catch (error) {
@@ -647,12 +637,14 @@ const Registration = () => {
                         onClick={handleUpiPayment}
                         disabled={isLoading || awaitingUpiReturn}
                       >
-                        {awaitingUpiReturn ? "⏳ Waiting for payment..." : "💳 Pay with GPay/UPI"}
+                        {awaitingUpiReturn ? "⏳ Waiting for payment..." : isIOS() ? "📋 Copy UPI Details" : "💳 Pay with GPay/UPI"}
                       </Button>
                       <p className="text-sm text-muted-foreground text-center">
                         {awaitingUpiReturn 
                           ? "Complete the payment in your UPI app and return here"
-                          : `Opens your UPI app with the correct amount: ₹${getTotalAmount()}`
+                          : isIOS() 
+                            ? "UPI details will be copied to clipboard for manual entry"
+                            : `Opens your UPI app with the correct amount: ₹${getTotalAmount()}`
                         }
                       </p>
                       
