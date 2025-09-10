@@ -84,7 +84,7 @@ Restart the dev server after changing env vars.
 ### Google Apps Script (Sheets)
 
 1. Create a new Google Sheet with a first row containing headers like:
-   `timestamp, fullName, email, phone, college, rollNo, section, selectedEvents, totalAmount, transactionRef, paidAtIso, upiTxnId, ticketDownloadTime`
+   `timestamp, fullName, email, phone, college, rollNo, section, selectedEvents, totalAmount, transactionRef, paidAtIso, upiTxnId, ticketDownloadTime, verificationHash`
    
    Note: All timestamps (paidAtIso, ticketDownloadTime) are automatically converted to Indian Standard Time (IST) format.
 2. Open Extensions → Apps Script and paste the following minimal script:
@@ -102,7 +102,7 @@ function doPost(e) {
   // Ensure headers exist (run once)
   const required = [
     'timestamp','fullName','email','phone','college','rollNo','section',
-    'selectedEvents','totalAmount','transactionRef','paidAtIso','upiTxnId','ticketDownloadTime','screenshotBase64','dupFlag'
+    'selectedEvents','totalAmount','transactionRef','paidAtIso','upiTxnId','ticketDownloadTime','verificationHash','screenshotBase64','dupFlag'
   ];
   if (!headers || headers.length === 0 || required.some(h => headers.indexOf(h) === -1)) {
     sheet.getRange(1,1,1,required.length).setValues([required]);
@@ -130,6 +130,7 @@ function doPost(e) {
     data.paidAtIso || '',
     data.upiTxnId || '',
     data.ticketDownloadTime || '',
+    data.verificationHash || '',
     data.screenshotBase64 || '',
     dupFlag
   ];

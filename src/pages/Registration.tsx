@@ -311,6 +311,11 @@ const Registration = () => {
       const transactionRef = generateTransactionRef();
       const paidAtIso = new Date().toISOString();
       const ticketDownloadTime = new Date().toISOString();
+      
+      // Generate verification hash for security
+      const verificationData = `${transactionRef}-${upiTxnId.trim()}-${totalAmount}-${selectedEvents.join(',')}`;
+      const verificationHash = btoa(verificationData).substring(0, 12).toUpperCase();
+      
       const payload = {
         ...formData,
         selectedEvents,
@@ -319,6 +324,7 @@ const Registration = () => {
         paidAtIso,
         upiTxnId: upiTxnId.trim() || undefined,
         ticketDownloadTime,
+        verificationHash,
       };
 
       console.log("Sending to Google Sheets:", payload);

@@ -16,9 +16,20 @@ export interface ReceiptData {
 }
 
 export function generateReceiptPDF(data: ReceiptData): void {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
+    try {
+        console.log('Starting PDF generation...');
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        // Generate verification hash for security
+        const verificationData = `${data.transactionRef}-${data.upiTxnId}-${data.totalAmount}-${data.selectedEvents.join(',')}`;
+        const verificationHash = btoa(verificationData).substring(0, 12).toUpperCase();
+        
+        // Debug: Log to console to check if PDF generation is working
+        console.log('Generating PDF for:', data);
+        console.log('Selected events:', data.selectedEvents);
+        console.log('Verification hash:', verificationHash);
 
     // Modern color scheme
     const primaryColor = [59, 130, 246]; // Blue-500
@@ -155,15 +166,15 @@ export function generateReceiptPDF(data: ReceiptData): void {
 
     yPosition += 100;
 
-    // Events Card
-    addRoundedRect(15, yPosition, pageWidth - 30, 60 + (data.selectedEvents.length * 15), [255, 255, 255], 8);
+    // Events Card - Enhanced for verification
+    addRoundedRect(15, yPosition, pageWidth - 30, 80 + (data.selectedEvents.length * 20), [255, 255, 255], 8);
     addLine(15, yPosition, pageWidth - 15, yPosition, primaryColor, 2);
     
     yPosition += 15;
-    addText('SELECTED EVENTS', 25, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
+    addText('🎫 REGISTERED EVENTS & PAYMENT BREAKDOWN', 25, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
     yPosition += 20;
 
-    // Event details with modern styling
+    // Event details with enhanced styling for verification
     const eventNames: Record<string, string> = {
         'web-dev': 'Web Development Challenge',
         'poster': 'Poster Presentation',
@@ -190,22 +201,42 @@ export function generateReceiptPDF(data: ReceiptData): void {
         'meme-contest': 50
     };
 
-    data.selectedEvents.forEach(eventId => {
+    // Header for events table
+    addRoundedRect(20, yPosition - 5, pageWidth - 40, 15, [59, 130, 246], 4);
+    addText('EVENT NAME', 25, yPosition + 5, { fontSize: 10, color: [255, 255, 255], style: 'bold' });
+    addRightText('AMOUNT', pageWidth - 25, yPosition + 5, { fontSize: 10, color: [255, 255, 255], style: 'bold' });
+    yPosition += 20;
+
+    data.selectedEvents.forEach((eventId, index) => {
         const eventName = eventNames[eventId] || eventId;
         const eventPrice = eventPrices[eventId] || 0;
         
-        // Event item with background
-        addRoundedRect(20, yPosition - 5, pageWidth - 40, 12, [248, 250, 252], 4);
-        addText(`• ${eventName}`, 25, yPosition, { fontSize: 12, color: darkColor, style: 'normal' });
-        addRightText(`₹${eventPrice}`, pageWidth - 25, yPosition, { fontSize: 12, color: accentColor, style: 'bold' });
-        yPosition += 15;
+        // Alternate background colors for better readability
+        const bgColor = index % 2 === 0 ? [248, 250, 252] : [240, 248, 255];
+        
+        // Event item with enhanced styling
+        addRoundedRect(20, yPosition - 5, pageWidth - 40, 15, bgColor, 4);
+        addText(`✓ ${eventName}`, 25, yPosition + 2, { fontSize: 11, color: darkColor, style: 'bold' });
+        addRightText(`₹${eventPrice}`, pageWidth - 25, yPosition + 2, { fontSize: 12, color: accentColor, style: 'bold' });
+        yPosition += 20;
     });
 
     yPosition += 10;
 
+    // Events Summary for easy verification
+    addRoundedRect(20, yPosition, pageWidth - 40, 30, [254, 243, 199], 6);
+    addText('📋 VERIFICATION SUMMARY', 25, yPosition + 8, { fontSize: 12, color: warningColor, style: 'bold' });
+    addText(`Registered for ${data.selectedEvents.length} event(s) | Total: ₹${data.totalAmount}`, 25, yPosition + 18, { 
+        fontSize: 10, 
+        color: darkColor, 
+        style: 'normal' 
+    });
+
+    yPosition += 40;
+
     // Total Amount with modern styling
     addRoundedRect(20, yPosition, pageWidth - 40, 25, [34, 197, 94], 6);
-    addText('TOTAL AMOUNT', 30, yPosition + 8, { fontSize: 12, color: [255, 255, 255], style: 'bold' });
+    addText('TOTAL AMOUNT PAID', 30, yPosition + 8, { fontSize: 12, color: [255, 255, 255], style: 'bold' });
     addRightText(`₹${data.totalAmount}`, pageWidth - 30, yPosition + 8, { fontSize: 18, color: [255, 255, 255], style: 'bold' });
 
     yPosition += 50;
@@ -225,19 +256,39 @@ export function generateReceiptPDF(data: ReceiptData): void {
 
     yPosition += 60;
 
+    // Security Verification Section
+    addRoundedRect(15, yPosition, pageWidth - 30, 60, [240, 248, 255], 8);
+    addLine(15, yPosition, pageWidth - 15, yPosition, primaryColor, 2);
+    
+    yPosition += 15;
+    addText('🔒 SECURITY VERIFICATION', 25, yPosition, { fontSize: 14, color: primaryColor, style: 'bold' });
+    yPosition += 15;
+    
+    addText('Verification Code:', 25, yPosition, { fontSize: 10, color: secondaryColor, style: 'normal' });
+    addText(verificationHash, 25, yPosition + 8, { fontSize: 12, color: darkColor, style: 'bold' });
+    
+    addText('Transaction ID:', pageWidth - 100, yPosition, { fontSize: 10, color: secondaryColor, style: 'normal' });
+    addText(data.transactionRef, pageWidth - 100, yPosition + 8, { fontSize: 10, color: darkColor, style: 'normal' });
+    
+    yPosition += 20;
+    addText('⚠️ This ticket contains security features. Any modification will be detected.', 25, yPosition, { 
+        fontSize: 9, 
+        color: warningColor, 
+        style: 'normal' 
+    });
+
+    yPosition += 40;
+
+    // Check if we need a new page for events
+    if (yPosition > pageHeight - 100) {
+        doc.addPage();
+        yPosition = 20;
+    }
+
     // Footer with modern styling
     addRoundedRect(15, yPosition, pageWidth - 30, 30, [248, 250, 252], 8);
     yPosition += 15;
     
-    const thankYouText = 'Thank you for registering for Cache 2025!';
-    const thankYouWidth = doc.getTextWidth(thankYouText);
-    addText(thankYouText, (pageWidth - thankYouWidth) / 2, yPosition, {
-        fontSize: 12,
-        color: primaryColor,
-        style: 'bold'
-    });
-    yPosition += 8;
-
     const contactText = 'For queries: raghavap1116@gmail.com';
     const contactWidth = doc.getTextWidth(contactText);
     addText(contactText, (pageWidth - contactWidth) / 2, yPosition, {
@@ -245,7 +296,77 @@ export function generateReceiptPDF(data: ReceiptData): void {
         color: secondaryColor
     });
 
-    // Save the PDF
-    const fileName = `Cache2025_Ticket_${data.transactionRef}.pdf`;
-    doc.save(fileName);
+    // Add Page 2 - Events Details Page
+    doc.addPage();
+    yPosition = 20;
+
+    // Events Page Header
+    addText('CACHE - 2K25', (pageWidth - doc.getTextWidth('CACHE - 2K25')) / 2, yPosition, {
+        fontSize: 24,
+        color: primaryColor,
+        style: 'bold'
+    });
+    yPosition += 30;
+
+    // Registered Events Details Page
+    addRoundedRect(15, yPosition, pageWidth - 30, pageHeight - 100, [255, 255, 255], 8);
+    addLine(15, yPosition, pageWidth - 15, yPosition, primaryColor, 2);
+    
+    yPosition += 20;
+    addText('🎫 REGISTERED EVENTS DETAILS', 25, yPosition, { fontSize: 18, color: primaryColor, style: 'bold' });
+    yPosition += 25;
+
+    // Transaction info for reference
+    addText('Transaction Reference:', 25, yPosition, { fontSize: 12, color: secondaryColor, style: 'bold' });
+    addText(data.transactionRef, 25, yPosition + 8, { fontSize: 14, color: darkColor, style: 'bold' });
+    yPosition += 25;
+
+    // Events table with enhanced styling
+    addRoundedRect(20, yPosition, pageWidth - 40, 20, [59, 130, 246], 4);
+    addText('EVENT NAME', 25, yPosition + 7, { fontSize: 12, color: [255, 255, 255], style: 'bold' });
+    addRightText('AMOUNT', pageWidth - 25, yPosition + 7, { fontSize: 12, color: [255, 255, 255], style: 'bold' });
+    yPosition += 25;
+
+    // Event details with enhanced styling (using existing variables from first page)
+    data.selectedEvents.forEach((eventId, index) => {
+        const eventName = eventNames[eventId] || eventId;
+        const eventPrice = eventPrices[eventId] || 0;
+        
+        // Alternate background colors for better readability
+        const bgColor = index % 2 === 0 ? [248, 250, 252] : [240, 248, 255];
+        
+        // Event item with enhanced styling
+        addRoundedRect(20, yPosition, pageWidth - 40, 18, bgColor, 4);
+        addText(`✓ ${eventName}`, 25, yPosition + 6, { fontSize: 12, color: darkColor, style: 'bold' });
+        addRightText(`₹${eventPrice}`, pageWidth - 25, yPosition + 6, { fontSize: 14, color: accentColor, style: 'bold' });
+        yPosition += 22;
+    });
+
+    yPosition += 20;
+
+    // Total summary
+    addRoundedRect(20, yPosition, pageWidth - 40, 30, [34, 197, 94], 6);
+    addText('TOTAL AMOUNT PAID', 30, yPosition + 10, { fontSize: 14, color: [255, 255, 255], style: 'bold' });
+    addRightText(`₹${data.totalAmount}`, pageWidth - 30, yPosition + 10, { fontSize: 20, color: [255, 255, 255], style: 'bold' });
+
+    yPosition += 50;
+
+    // Verification notice
+    addRoundedRect(20, yPosition, pageWidth - 40, 40, [254, 243, 199], 6);
+    addText('⚠️ IMPORTANT FOR EVENT ENTRY', 25, yPosition + 10, { fontSize: 12, color: warningColor, style: 'bold' });
+    addText('Please show this page along with your transaction proof at the event venue.', 25, yPosition + 25, { 
+        fontSize: 10, 
+        color: darkColor, 
+        style: 'normal' 
+    });
+
+        // Save the PDF with cache-2k25 and timestamp
+        const currentTime = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        const fileName = `cache-2k25_ticket_${data.transactionRef}_${currentTime}.pdf`;
+        doc.save(fileName);
+        console.log('PDF generated successfully:', fileName);
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+    }
 }

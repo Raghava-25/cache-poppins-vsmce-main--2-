@@ -11,6 +11,7 @@ export type RegistrationPayload = {
   paidAtIso?: string;
   upiTxnId?: string;
   ticketDownloadTime?: string;
+  verificationHash?: string;
 };
 
 // Optional server-side UTR existence check. Expects Apps Script to return { exists: boolean }
@@ -63,6 +64,7 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
     paidAtIso: convertToIST(payload.paidAtIso || ''),
     upiTxnId: payload.upiTxnId || '',
     ticketDownloadTime: convertToIST(payload.ticketDownloadTime || ''),
+    verificationHash: payload.verificationHash || '',
     flagIfDuplicate: '1',
   });
 
