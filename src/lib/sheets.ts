@@ -10,6 +10,7 @@ export type RegistrationPayload = {
   transactionRef: string;
   paidAtIso?: string;
   upiTxnId?: string;
+  ticketDownloadTime?: string;
 };
 
 // Optional server-side UTR existence check. Expects Apps Script to return { exists: boolean }
@@ -33,6 +34,21 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
 
   console.log("Using endpoint:", endpoint);
 
+  // Convert timestamps to IST
+  const convertToIST = (isoString: string) => {
+    if (!isoString) return '';
+    return new Date(isoString).toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
   // Use GET request with URL parameters to avoid CORS issues
   const params = new URLSearchParams({
     fullName: payload.fullName,
@@ -44,8 +60,9 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
     selectedEvents: payload.selectedEvents.join(','),
     totalAmount: payload.totalAmount.toString(),
     transactionRef: payload.transactionRef,
-    paidAtIso: payload.paidAtIso || '',
+    paidAtIso: convertToIST(payload.paidAtIso || ''),
     upiTxnId: payload.upiTxnId || '',
+    ticketDownloadTime: convertToIST(payload.ticketDownloadTime || ''),
     flagIfDuplicate: '1',
   });
 

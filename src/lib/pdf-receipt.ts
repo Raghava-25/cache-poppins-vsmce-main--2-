@@ -12,6 +12,7 @@ export interface ReceiptData {
     transactionRef: string;
     upiTxnId: string;
     paidAtIso: string;
+    ticketDownloadTime?: string;
 }
 
 export function generateReceiptPDF(data: ReceiptData): void {
@@ -110,6 +111,22 @@ export function generateReceiptPDF(data: ReceiptData): void {
     });
     addText(`Payment Date: ${paymentDate}`, 20, yPosition, { fontSize: 12 });
     yPosition += 8;
+
+    // Ticket Download Time
+    if (data.ticketDownloadTime) {
+        const downloadDate = new Date(data.ticketDownloadTime).toLocaleString('en-IN', {
+            timeZone: 'Asia/Kolkata',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+        addText(`Ticket Downloaded: ${downloadDate}`, 20, yPosition, { fontSize: 12, color: accentColor });
+        yPosition += 8;
+    }
 
     // UTR ID
     addText(`UTR ID: ${data.upiTxnId}`, 20, yPosition, { fontSize: 12, style: 'bold', color: accentColor });

@@ -310,6 +310,7 @@ const Registration = () => {
       const totalAmount = getTotalAmount();
       const transactionRef = generateTransactionRef();
       const paidAtIso = new Date().toISOString();
+      const ticketDownloadTime = new Date().toISOString();
       const payload = {
         ...formData,
         selectedEvents,
@@ -317,6 +318,7 @@ const Registration = () => {
         transactionRef,
         paidAtIso,
         upiTxnId: upiTxnId.trim() || undefined,
+        ticketDownloadTime,
       };
 
       console.log("Sending to Google Sheets:", payload);
@@ -347,6 +349,7 @@ const Registration = () => {
         transactionRef,
         upiTxnId: upiTxnId.trim(),
         paidAtIso,
+        ticketDownloadTime,
       };
 
       // Generate PDF receipt
@@ -572,37 +575,6 @@ const Registration = () => {
               </CardContent>
             </Card>
 
-            {/* Payment Details */}
-            <Card className="card-gradient border-border animate-slide-up">
-              <CardHeader>
-                <CardTitle className="text-2xl text-gradient">Payment Details *</CardTitle>
-                <CardDescription>Enter 12-digit UTR ID from your payment (Required)</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="upiTxnId">12-Digit UTR (Unique Transaction Reference) ID *</Label>
-                  <Input
-                    id="upiTxnId"
-                    name="upiTxnId"
-                    placeholder="e.g., 123456789012"
-                    value={upiTxnId}
-                    onChange={handleUtrChange}
-                    className="mt-1"
-                    required
-                    maxLength={12}
-                    pattern="[0-9]{12}"
-                  />
-                  <div className="text-xs text-muted-foreground mt-1">
-                    <strong>How to find your 12-digit UTR ID:</strong>
-                    <br />• Check your UPI app (PhonePe, Google Pay, Paytm, etc.)
-                    <br />• Look for the transaction reference number
-                    <br />• It's a 12-digit number (no letters)
-                    <br />• Example: 123456789012
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Payment Section */}
             {selectedEvents.length > 0 && getTotalAmount() > 0 && (
               <Card className="card-gradient border-border animate-slide-up">
@@ -677,6 +649,39 @@ const Registration = () => {
                       </Button>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Payment Details */}
+            {selectedEvents.length > 0 && getTotalAmount() > 0 && (
+              <Card className="card-gradient border-border animate-slide-up">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-gradient">Payment Details *</CardTitle>
+                  <CardDescription>Enter 12-digit UTR ID from your payment (Required)</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="upiTxnId">12-Digit UTR (Unique Transaction Reference) ID *</Label>
+                    <Input
+                      id="upiTxnId"
+                      name="upiTxnId"
+                      placeholder="e.g., 123456789012"
+                      value={upiTxnId}
+                      onChange={handleUtrChange}
+                      className="mt-1"
+                      required
+                      maxLength={12}
+                      pattern="[0-9]{12}"
+                    />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      <strong>How to find your 12-digit UTR ID:</strong>
+                      <br />• Check your UPI app (PhonePe, Google Pay, Paytm, etc.)
+                      <br />• Look for the transaction reference number
+                      <br />• It's a 12-digit number (no letters)
+                      <br />• Example: 123456789012
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}
