@@ -37,7 +37,8 @@ export function buildPhonePeIntentUrl(params: UpiIntentParams): string {
     tr: transactionRef,
     cu: currency,
   });
-  return `phonepe://pay?${query.toString()}`;
+  // PhonePe uses the standard UPI scheme
+  return `upi://pay?${query.toString()}`;
 }
 
 export function buildPaytmIntentUrl(params: UpiIntentParams): string {

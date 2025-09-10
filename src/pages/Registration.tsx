@@ -7,15 +7,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "react-router-dom";
-import { 
-  buildUpiIntentUrl, 
-  buildGPayIntentUrl, 
-  buildPhonePeIntentUrl, 
-  buildPaytmIntentUrl, 
+import {
+  buildUpiIntentUrl,
+  buildGPayIntentUrl,
+  buildPhonePeIntentUrl,
+  buildPaytmIntentUrl,
   buildBhimIntentUrl,
   generateTransactionRef,
   isIOS,
-  isAndroid 
+  isAndroid
 } from "@/lib/payments";
 import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
 import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
@@ -94,7 +94,7 @@ const Registration = () => {
   const handleUtrChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUpiTxnId(value);
-    
+
     // Mark payment as completed when valid UTR is entered
     if (value.trim().length === 12 && /^\d{12}$/.test(value.trim())) {
       setPaymentCompleted(true);
@@ -145,37 +145,52 @@ const Registration = () => {
         currency: 'INR' as const,
       };
 
-      if (isIOS()) {
-        // For iOS: Copy UPI details to clipboard
-        const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
-        
-        navigator.clipboard.writeText(upiDetails).then(() => {
-          toast({
-            title: "UPI Details Copied",
-            description: "UPI details copied to clipboard. Open your UPI app and paste the details.",
-          });
-        }).catch(() => {
-          // Fallback if clipboard API fails
-          toast({
-            title: "UPI Payment Details",
-            description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
-          });
+      // Try to open UPI app directly - this will open the default UPI app (PhonePe, GPay, etc.)
+      const upiUrl = buildUpiIntentUrl(paymentParams);
+
+      // Use window.location.href for better compatibility
+      try {
+        window.location.href = upiUrl;
+        toast({
+          title: "Opening UPI App",
+          description: "Redirecting to your UPI app for payment...",
         });
-      } else {
-        // For Android: Open UPI app directly
-        const upiUrl = buildUpiIntentUrl(paymentParams);
-        window.open(upiUrl, '_blank');
+      } catch (error) {
+        // Fallback: try opening in new window
+        try {
+          window.open(upiUrl, '_blank');
+          toast({
+            title: "Opening UPI App",
+            description: "Redirecting to your UPI app for payment...",
+          });
+        } catch (windowError) {
+          // If both fail, show UPI details for manual entry
+          const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
+
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(upiDetails).then(() => {
+              toast({
+                title: "UPI Details Copied",
+                description: "UPI details copied to clipboard. Open your UPI app and paste the details.",
+              });
+            }).catch(() => {
+              toast({
+                title: "UPI Payment Details",
+                description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
+              });
+            });
+          } else {
+            toast({
+              title: "UPI Payment Details",
+              description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
+            });
+          }
+        }
       }
-      
+
       // Set awaiting state
       setAwaitingUpiReturn(true);
-      
-      toast({
-        title: isIOS() ? "UPI Details Copied" : "Opening UPI App",
-        description: isIOS() 
-          ? "Open your UPI app and paste the details to make payment."
-          : "Complete the payment and return to this page",
-      });
+
     } catch (error) {
       toast({
         title: "Error",
@@ -305,17 +320,17 @@ const Registration = () => {
             description: "This UTR appears in our records. If incorrect, we will verify manually.",
           });
         }
-      } catch {}
+      } catch { }
 
       const totalAmount = getTotalAmount();
       const transactionRef = generateTransactionRef();
       const paidAtIso = new Date().toISOString();
       const ticketDownloadTime = new Date().toISOString();
-      
+
       // Generate verification hash for security
       const verificationData = `${transactionRef}-${upiTxnId.trim()}-${totalAmount}-${selectedEvents.join(',')}`;
       const verificationHash = btoa(verificationData).substring(0, 12).toUpperCase();
-      
+
       const payload = {
         ...formData,
         selectedEvents,
@@ -587,9 +602,9 @@ const Registration = () => {
                 <CardHeader>
                   <CardTitle className="text-2xl text-gradient">Payment</CardTitle>
                   <CardDescription>
-                    {awaitingUpiReturn 
+                    {awaitingUpiReturn
                       ? "Waiting for payment completion..."
-                      : paymentCompleted 
+                      : paymentCompleted
                         ? "Payment completed! You can now download your ticket."
                         : "Click the button below to pay with your UPI app"
                     }
@@ -609,14 +624,14 @@ const Registration = () => {
                         {awaitingUpiReturn ? "⏳ Waiting for payment..." : isIOS() ? "📋 Copy UPI Details" : "💳 Pay with GPay/UPI"}
                       </Button>
                       <p className="text-sm text-muted-foreground text-center">
-                        {awaitingUpiReturn 
+                        {awaitingUpiReturn
                           ? "Complete the payment in your UPI app and return here"
-                          : isIOS() 
+                          : isIOS()
                             ? "UPI details will be copied to clipboard"
                             : `Opens your UPI app with amount: ₹${getTotalAmount()}`
                         }
                       </p>
-                      
+
                       {/* iOS Manual UPI Details */}
                       {isIOS() && !awaitingUpiReturn && (
                         <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
