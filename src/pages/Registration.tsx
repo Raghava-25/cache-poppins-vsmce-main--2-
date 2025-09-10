@@ -20,6 +20,7 @@ import {
 import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
 import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
 import Footer from "@/components/Footer";
+import QRCodeDisplay from "@/components/QRCodeDisplay";
 
 const events = {
   technical: [
@@ -82,7 +83,7 @@ const Registration = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [awaitingUpiReturn]);
+  }, [awaitingUpiReturn, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -320,7 +321,9 @@ const Registration = () => {
             description: "This UTR appears in our records. If incorrect, we will verify manually.",
           });
         }
-      } catch { }
+      } catch {
+        // Ignore server check errors, continue with registration
+      }
 
       const totalAmount = getTotalAmount();
       const transactionRef = generateTransactionRef();
@@ -631,6 +634,24 @@ const Registration = () => {
                             : `Opens your UPI app with amount: ₹${getTotalAmount()}`
                         }
                       </p>
+
+                      {/* QR Code Display */}
+                      <div className="mt-6">
+                        <QRCodeDisplay
+                          upiId="raghavap1115-1@okicici"
+                          amount={getTotalAmount()}
+                          transactionNote={`Cache 2025 - ${formData.fullName || "Participant"}`}
+                          onCopyDetails={() => {
+                            const upiDetails = `UPI ID: raghavap1115-1@okicici\nAmount: ₹${getTotalAmount()}\nNote: Cache 2025 - ${formData.fullName || "Participant"}`;
+                            navigator.clipboard.writeText(upiDetails).then(() => {
+                              toast({
+                                title: "UPI Details Copied",
+                                description: "UPI details copied to clipboard",
+                              });
+                            });
+                          }}
+                        />
+                      </div>
 
                       {/* iOS Manual UPI Details */}
                       {isIOS() && !awaitingUpiReturn && (
