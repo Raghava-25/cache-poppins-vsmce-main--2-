@@ -20,10 +20,12 @@ export function generateReceiptPDF(data: ReceiptData): void {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Colors
-    const primaryColor = [41, 128, 185]; // Blue
-    const secondaryColor = [52, 73, 94]; // Dark gray
-    const accentColor = [46, 204, 113]; // Green
+    // Modern color scheme
+    const primaryColor = [59, 130, 246]; // Blue-500
+    const secondaryColor = [107, 114, 128]; // Gray-500
+    const accentColor = [34, 197, 94]; // Green-500
+    const warningColor = [245, 158, 11]; // Amber-500
+    const darkColor = [31, 41, 55]; // Gray-800
 
     // Helper function to add text with styling
     const addText = (text: string, x: number, y: number, options: any = {}) => {
@@ -51,52 +53,47 @@ export function generateReceiptPDF(data: ReceiptData): void {
     };
 
     // Helper function to add line
-    const addLine = (x1: number, y1: number, x2: number, y2: number, color: number[] = [200, 200, 200]) => {
+    const addLine = (x1: number, y1: number, x2: number, y2: number, color: number[] = [200, 200, 200], width: number = 0.5) => {
         doc.setDrawColor(color[0], color[1], color[2]);
-        doc.setLineWidth(0.5);
+        doc.setLineWidth(width);
         doc.line(x1, y1, x2, y2);
     };
 
-    // Header with centered text
-    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, pageWidth, 50, 'F');
+    // Helper function to add rounded rectangle
+    const addRoundedRect = (x: number, y: number, width: number, height: number, color: number[], radius: number = 5) => {
+        doc.setFillColor(color[0], color[1], color[2]);
+        doc.roundedRect(x, y, width, height, radius, radius, 'F');
+    };
 
-    // Center text manually
-    const cacheText = 'CACHE 2025';
+    // Clean header without background
+    let yPosition = 20;
+
+    // Main title with modern styling - no background
+    const cacheText = 'CACHE - 2K25';
     const cacheTextWidth = doc.getTextWidth(cacheText);
-    addText(cacheText, (pageWidth - cacheTextWidth) / 2, 15, {
+    addText(cacheText, (pageWidth - cacheTextWidth) / 2, yPosition, {
         fontSize: 24,
-        color: [255, 255, 255],
+        color: primaryColor,
         style: 'bold'
     });
 
-    const receiptText = 'Registration Receipt';
-    const receiptTextWidth = doc.getTextWidth(receiptText);
-    addText(receiptText, (pageWidth - receiptTextWidth) / 2, 30, {
-        fontSize: 16,
-        color: [255, 255, 255],
-        style: 'bold'
-    });
+    yPosition += 30;
 
-    const thankYouText = 'Thank you for registration';
-    const thankYouTextWidth = doc.getTextWidth(thankYouText);
-    addText(thankYouText, (pageWidth - thankYouTextWidth) / 2, 40, {
-        fontSize: 12,
-        color: [255, 255, 255]
-    });
-
-    let yPosition = 70;
-
-    // Receipt Info
-    addText('RECEIPT DETAILS', 20, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
+    // Transaction info card
+    addRoundedRect(15, yPosition, pageWidth - 30, 50, [248, 250, 252], 8);
+    addLine(15, yPosition + 50, pageWidth - 15, yPosition + 50, [229, 231, 235], 1);
+    
     yPosition += 15;
 
-    addLine(20, yPosition, pageWidth - 20, yPosition, primaryColor);
-    yPosition += 10;
-
     // Transaction Reference
-    addText(`Transaction ID: ${data.transactionRef}`, 20, yPosition, { fontSize: 12, style: 'bold' });
-    yPosition += 8;
+    addText('Transaction ID', 25, yPosition, { fontSize: 10, color: secondaryColor, style: 'normal' });
+    addText(data.transactionRef, 25, yPosition + 8, { fontSize: 14, color: darkColor, style: 'bold' });
+    
+    // UTR ID
+    addText('UTR ID', pageWidth - 100, yPosition, { fontSize: 10, color: secondaryColor, style: 'normal' });
+    addText(data.upiTxnId, pageWidth - 100, yPosition + 8, { fontSize: 14, color: accentColor, style: 'bold' });
+    
+    yPosition += 20;
 
     // Payment Date
     const paymentDate = new Date(data.paidAtIso).toLocaleString('en-IN', {
@@ -109,8 +106,8 @@ export function generateReceiptPDF(data: ReceiptData): void {
         second: '2-digit',
         hour12: true
     });
-    addText(`Payment Date: ${paymentDate}`, 20, yPosition, { fontSize: 12 });
-    yPosition += 8;
+    addText('Payment Date', 25, yPosition, { fontSize: 10, color: secondaryColor, style: 'normal' });
+    addText(paymentDate, 25, yPosition + 8, { fontSize: 12, color: darkColor, style: 'normal' });
 
     // Ticket Download Time
     if (data.ticketDownloadTime) {
@@ -124,22 +121,21 @@ export function generateReceiptPDF(data: ReceiptData): void {
             second: '2-digit',
             hour12: true
         });
-        addText(`Ticket Downloaded: ${downloadDate}`, 20, yPosition, { fontSize: 12, color: accentColor });
-        yPosition += 8;
+        addText('Downloaded', pageWidth - 100, yPosition, { fontSize: 10, color: secondaryColor, style: 'normal' });
+        addText(downloadDate, pageWidth - 100, yPosition + 8, { fontSize: 12, color: accentColor, style: 'normal' });
     }
 
-    // UTR ID
-    addText(`UTR ID: ${data.upiTxnId}`, 20, yPosition, { fontSize: 12, style: 'bold', color: accentColor });
+    yPosition += 70;
+
+    // Participant Details Card
+    addRoundedRect(15, yPosition, pageWidth - 30, 120, [255, 255, 255], 8);
+    addLine(15, yPosition, pageWidth - 15, yPosition, primaryColor, 2);
+    
     yPosition += 15;
+    addText('PARTICIPANT DETAILS', 25, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
+    yPosition += 20;
 
-    // Participant Details
-    addText('PARTICIPANT DETAILS', 20, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
-    yPosition += 15;
-
-    addLine(20, yPosition, pageWidth - 20, yPosition, primaryColor);
-    yPosition += 10;
-
-    // Personal Information
+    // Personal Information in grid layout
     const personalInfo = [
         { label: 'Full Name', value: data.fullName },
         { label: 'Email', value: data.email },
@@ -149,22 +145,25 @@ export function generateReceiptPDF(data: ReceiptData): void {
         { label: 'Section', value: data.section }
     ];
 
-    personalInfo.forEach(info => {
-        addText(`${info.label}:`, 20, yPosition, { fontSize: 12, style: 'bold' });
-        addText(info.value, 100, yPosition, { fontSize: 12 });
-        yPosition += 10;
+    personalInfo.forEach((info, index) => {
+        const x = 25 + (index % 2) * (pageWidth / 2 - 20);
+        const y = yPosition + Math.floor(index / 2) * 15;
+        
+        addText(`${info.label}:`, x, y, { fontSize: 10, color: secondaryColor, style: 'normal' });
+        addText(info.value, x, y + 8, { fontSize: 12, color: darkColor, style: 'normal' });
     });
 
-    yPosition += 10;
+    yPosition += 100;
 
-    // Selected Events
-    addText('SELECTED EVENTS', 20, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
+    // Events Card
+    addRoundedRect(15, yPosition, pageWidth - 30, 60 + (data.selectedEvents.length * 15), [255, 255, 255], 8);
+    addLine(15, yPosition, pageWidth - 15, yPosition, primaryColor, 2);
+    
     yPosition += 15;
+    addText('SELECTED EVENTS', 25, yPosition, { fontSize: 16, color: primaryColor, style: 'bold' });
+    yPosition += 20;
 
-    addLine(20, yPosition, pageWidth - 20, yPosition, primaryColor);
-    yPosition += 10;
-
-    // Event details with rupee symbols
+    // Event details with modern styling
     const eventNames: Record<string, string> = {
         'web-dev': 'Web Development Challenge',
         'poster': 'Poster Presentation',
@@ -179,65 +178,74 @@ export function generateReceiptPDF(data: ReceiptData): void {
     };
 
     const eventPrices: Record<string, number> = {
-        'web-dev': 200,
+        'web-dev': 100,
         'poster': 100,
-        'tech-expo': 300,
-        'pymaster': 150,
+        'tech-expo': 100,
+        'pymaster': 50,
         'tech-quiz': 100,
-        'photography': 150,
+        'photography': 50,
         'free-fire': 200,
-        'drawing': 100,
-        'bgmi': 1,
+        'drawing': 50,
+        'bgmi': 200,
         'meme-contest': 50
     };
 
     data.selectedEvents.forEach(eventId => {
         const eventName = eventNames[eventId] || eventId;
         const eventPrice = eventPrices[eventId] || 0;
-        addText(`• ${eventName}`, 20, yPosition, { fontSize: 12 });
-        addRightText(`₹${eventPrice}`, pageWidth - 20, yPosition, { fontSize: 12, style: 'bold' });
-        yPosition += 10;
+        
+        // Event item with background
+        addRoundedRect(20, yPosition - 5, pageWidth - 40, 12, [248, 250, 252], 4);
+        addText(`• ${eventName}`, 25, yPosition, { fontSize: 12, color: darkColor, style: 'normal' });
+        addRightText(`₹${eventPrice}`, pageWidth - 25, yPosition, { fontSize: 12, color: accentColor, style: 'bold' });
+        yPosition += 15;
     });
 
     yPosition += 10;
 
-    // Total Amount with rupee symbol
-    addLine(20, yPosition, pageWidth - 20, yPosition, [200, 200, 200]);
-    yPosition += 10;
+    // Total Amount with modern styling
+    addRoundedRect(20, yPosition, pageWidth - 40, 25, [34, 197, 94], 6);
+    addText('TOTAL AMOUNT', 30, yPosition + 8, { fontSize: 12, color: [255, 255, 255], style: 'bold' });
+    addRightText(`₹${data.totalAmount}`, pageWidth - 30, yPosition + 8, { fontSize: 18, color: [255, 255, 255], style: 'bold' });
 
-    addText('TOTAL AMOUNT:', 20, yPosition, { fontSize: 16, style: 'bold', color: secondaryColor });
-    addRightText(`₹${data.totalAmount}`, pageWidth - 20, yPosition, { fontSize: 18, style: 'bold', color: accentColor });
-    yPosition += 20;
+    yPosition += 50;
 
-    // Footer
-    addLine(20, yPosition, pageWidth - 20, yPosition, [200, 200, 200]);
+    // Important Notice Card - More prominent
+    addRoundedRect(15, yPosition, pageWidth - 30, 50, [254, 243, 199], 8);
+    addLine(15, yPosition, pageWidth - 15, yPosition, warningColor, 3);
+    
     yPosition += 15;
+    addText('⚠️ IMPORTANT', 25, yPosition, { fontSize: 14, color: warningColor, style: 'bold' });
+    yPosition += 15;
+    addText('Please show both your transaction proof and this ticket at the entry gate to participate in the event.', 25, yPosition, { 
+        fontSize: 12, 
+        color: darkColor, 
+        style: 'bold' 
+    });
 
-    const thankYouFooterText = 'Thank you for registering for Cache 2025!';
-    const thankYouFooterWidth = doc.getTextWidth(thankYouFooterText);
-    addText(thankYouFooterText, (pageWidth - thankYouFooterWidth) / 2, yPosition, {
-        fontSize: 14,
+    yPosition += 60;
+
+    // Footer with modern styling
+    addRoundedRect(15, yPosition, pageWidth - 30, 30, [248, 250, 252], 8);
+    yPosition += 15;
+    
+    const thankYouText = 'Thank you for registering for Cache 2025!';
+    const thankYouWidth = doc.getTextWidth(thankYouText);
+    addText(thankYouText, (pageWidth - thankYouWidth) / 2, yPosition, {
+        fontSize: 12,
         color: primaryColor,
         style: 'bold'
     });
-    yPosition += 10;
+    yPosition += 8;
 
-    const contactText = 'For any queries, contact us at raghavap1116@gmail.com';
+    const contactText = 'For queries: raghavap1116@gmail.com';
     const contactWidth = doc.getTextWidth(contactText);
     addText(contactText, (pageWidth - contactWidth) / 2, yPosition, {
-        fontSize: 10,
+        fontSize: 9,
         color: secondaryColor
-    });
-    yPosition += 10;
-
-    const disclaimerText = 'This is a computer-generated receipt.';
-    const disclaimerWidth = doc.getTextWidth(disclaimerText);
-    addText(disclaimerText, (pageWidth - disclaimerWidth) / 2, yPosition, {
-        fontSize: 8,
-        color: [150, 150, 150]
     });
 
     // Save the PDF
-    const fileName = `Cache2025_Receipt_${data.transactionRef}.pdf`;
+    const fileName = `Cache2025_Ticket_${data.transactionRef}.pdf`;
     doc.save(fileName);
 }
