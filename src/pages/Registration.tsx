@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import {
   buildUpiIntentUrl,
   buildGPayIntentUrl,
@@ -18,7 +18,6 @@ import {
   isAndroid
 } from "@/lib/payments";
 import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
-import { generateReceiptPDF, ReceiptData } from "@/lib/pdf-receipt";
 import Footer from "@/components/Footer";
 import QRCodeDisplay from "@/components/QRCodeDisplay";
 
@@ -56,6 +55,7 @@ const Registration = () => {
   const [awaitingUpiReturn, setAwaitingUpiReturn] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [rulesAccepted, setRulesAccepted] = useState(false);
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -203,7 +203,7 @@ const Registration = () => {
 
   // No direct payment button now; users scan the static QR and then confirm
 
-  const handleDownloadTicket = async () => {
+  const handleSubmitRegistration = async () => {
     // Validate required fields
     if (!formData.fullName.trim()) {
       toast({
@@ -309,6 +309,14 @@ const Registration = () => {
       });
       return;
     }
+    if (!rulesAccepted) {
+      toast({
+        title: "Validation Error",
+        description: "Please read and accept the event rules before submitting",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -360,31 +368,12 @@ const Registration = () => {
       const result = await res.json();
       console.log("Success response:", result);
 
-      // Generate and download PDF receipt
-      const receiptData: ReceiptData = {
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        college: formData.college,
-        rollNo: formData.rollNo,
-        section: formData.section,
-        selectedEvents,
-        totalAmount,
-        transactionRef,
-        upiTxnId: upiTxnId.trim(),
-        paidAtIso,
-        ticketDownloadTime,
-      };
-
-      // Generate PDF receipt
-      generateReceiptPDF(receiptData);
-
       // Show thank you message
       setShowThankYou(true);
 
       toast({
         title: "🎉 Registration Successful!",
-        description: "Your details have been recorded successfully. Receipt downloaded!",
+        description: "Thank you for registering! Our team will send your ticket through email.",
       });
 
       // Mark UTR as used (client-side) to deter reuse on this device
@@ -397,7 +386,7 @@ const Registration = () => {
         // ignore storage errors
       }
 
-      // Reset the form after successful submission and PDF download
+      // Reset the form after successful submission
       setTimeout(() => {
         setFormData({
           fullName: '',
@@ -411,7 +400,8 @@ const Registration = () => {
         setUpiTxnId("");
         setShowThankYou(false);
         setPaymentCompleted(false);
-      }, 3000);
+        setRulesAccepted(false);
+      }, 5000);
     } catch (error) {
       console.error("Error submitting to sheets:", error);
       toast({
@@ -599,6 +589,47 @@ const Registration = () => {
               </CardContent>
             </Card>
 
+            {/* Rules Acceptance */}
+            <Card className="card-gradient border-border animate-slide-up">
+              <CardHeader>
+                <CardTitle className="text-2xl text-gradient">Rules & Guidelines</CardTitle>
+                <CardDescription>Please read and accept the event rules before proceeding</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="rulesAccepted"
+                    checked={rulesAccepted}
+                    onCheckedChange={(checked) => setRulesAccepted(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="rulesAccepted" className="cursor-pointer">
+                      I have read and agree to the{" "}
+                      <Link 
+                        to="/rules" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline font-medium"
+                      >
+                        Event Rules and Guidelines
+                      </Link>
+                      . I understand that I must follow all rules and that any misconduct may lead to disqualification without refund.
+                    </Label>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                  <p className="font-medium mb-2">Important Reminders:</p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>Carry your college ID and event ticket at all times</li>
+                    <li>Follow volunteers' instructions and campus guidelines</li>
+                    <li>Decisions by judges/organizers are final</li>
+                    <li>Keep your payment screenshot ready to show at the event</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Payment Section */}
             {selectedEvents.length > 0 && getTotalAmount() > 0 && (
               <Card className="card-gradient border-border animate-slide-up">
@@ -677,17 +708,17 @@ const Registration = () => {
                         <div className="text-4xl">✅</div>
                         <p className="text-lg font-semibold text-green-600">Payment Completed!</p>
                         <p className="text-sm text-muted-foreground">
-                          Your UTR ID has been verified. Click below to download your ticket.
+                          Your UTR ID has been verified. Click below to submit your registration.
                         </p>
                       </div>
                       <Button
                         type="button"
                         size="lg"
                         className="w-full max-w-md bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg"
-                        onClick={handleDownloadTicket}
+                        onClick={handleSubmitRegistration}
                         disabled={isLoading}
                       >
-                        {isLoading ? "Processing..." : "🎫 Download Ticket"}
+                        {isLoading ? "Processing..." : "📝 Submit Registration"}
                       </Button>
                     </div>
                   )}
@@ -734,9 +765,9 @@ const Registration = () => {
                 <CardContent className="pt-6">
                   <div className="text-center space-y-4">
                     <div className="text-6xl">🎉</div>
-                    <h3 className="text-2xl font-bold text-green-600">Thank You!</h3>
+                    <h3 className="text-2xl font-bold text-green-600">Thank You for Registering!</h3>
                     <p className="text-muted-foreground">
-                      Your registration has been submitted successfully. Your ticket has been downloaded automatically.
+                      Your registration has been submitted successfully. Our team will send your ticket through email.
                     </p>
                     <p className="text-sm text-muted-foreground">
                       Please keep your payment screenshot ready to show at the event.
