@@ -509,7 +509,7 @@ const Registration = () => {
               Register for Cache 2025
             </h1>
             <p className="text-xl text-muted-foreground">
-              Join us for the ultimate tech fest experience on Sep 18 & 19
+              Join us for the ultimate tech fest experience on Oct 9 & 10
             </p>
           </div>
 

@@ -88,7 +88,7 @@ const Index = () => {
                   Event Dates
                 </h3>
                 <p className="text-lg text-muted-foreground mb-2">
-                  September 18 & 19
+                  October 9 & 10
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Two full days of excitement
