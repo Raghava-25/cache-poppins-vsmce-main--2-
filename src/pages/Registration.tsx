@@ -66,6 +66,25 @@ const Registration = () => {
     }
   }, [location]);
 
+  // Add beforeunload warning for unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Check if form has any data that would be lost
+      const hasFormData = formData.fullName || formData.email || formData.phone || 
+                         formData.college || formData.rollNo || formData.section ||
+                         selectedEvents.length > 0 || upiTxnId;
+      
+      if (hasFormData && !showThankYou) {
+        e.preventDefault();
+        e.returnValue = 'Your registration form data will be lost if you leave this page. Are you sure you want to continue?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [formData, selectedEvents, upiTxnId, showThankYou]);
+
   // Handle visibility change to detect when user returns from UPI app
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -606,14 +625,14 @@ const Registration = () => {
                   <div className="flex-1">
                     <Label htmlFor="rulesAccepted" className="cursor-pointer">
                       I have read and agree to the{" "}
-                      <Link 
-                        to="/rules" 
+                      <a 
+                        href="/rules" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-primary hover:underline font-medium"
                       >
                         Event Rules and Guidelines
-                      </Link>
+                      </a>
                       . I understand that I must follow all rules and that any misconduct may lead to disqualification without refund.
                     </Label>
                   </div>
