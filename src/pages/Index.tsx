@@ -38,7 +38,7 @@ const Index = () => {
               VSM College of Engineering's Premier Tech Festival
             </p>
             <p className="text-lg md:text-xl text-muted-foreground mb-12 font-medium">
-              September 18 & 19, 2025
+              October 9 & 10, 2025
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">

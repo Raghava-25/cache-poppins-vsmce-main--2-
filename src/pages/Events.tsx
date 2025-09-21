@@ -147,6 +147,17 @@ const EventCard = ({ event, category }: { event: any; category: 'technical' | 'n
             Register
           </Link>
         </Button>
+        <div className="flex justify-center items-center">
+  <Button
+    variant="outline"
+    size="lg"
+    asChild
+    className="border-primary/50 hover:bg-primary/10"
+  >
+    <Link to="/rules">Rules</Link>
+  </Button>
+</div>
+
       </CardContent>
     </Card>
   );
