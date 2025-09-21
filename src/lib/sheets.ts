@@ -51,6 +51,32 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
     });
   };
 
+  // Flatten team members into individual columns
+  const flattenTeamMembers = (teamMembers: {[eventId: string]: string[]} = {}) => {
+    const flattened: {[key: string]: string} = {};
+    let memberIndex = 1;
+    
+    // Get all team members from all events
+    const allTeamMembers: string[] = [];
+    Object.values(teamMembers).forEach(eventTeam => {
+      eventTeam.forEach(member => {
+        if (member.trim()) {
+          allTeamMembers.push(member.trim());
+        }
+      });
+    });
+    
+    // Create member1, member2, etc. columns
+    allTeamMembers.forEach(member => {
+      flattened[`member${memberIndex}`] = member;
+      memberIndex++;
+    });
+    
+    return flattened;
+  };
+
+  const teamMemberColumns = flattenTeamMembers(payload.teamMembers);
+
   // Use GET request with URL parameters to avoid CORS issues
   const params = new URLSearchParams({
     fullName: payload.fullName,
@@ -66,8 +92,8 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
     upiTxnId: payload.upiTxnId || '',
     ticketDownloadTime: convertToIST(payload.ticketDownloadTime || ''),
     verificationHash: payload.verificationHash || '',
-    teamMembers: payload.teamMembers ? JSON.stringify(payload.teamMembers) : '',
     flagIfDuplicate: '1',
+    ...teamMemberColumns, // Spread the individual team member columns
   });
 
   const url = `${endpoint}?${params.toString()}`;
