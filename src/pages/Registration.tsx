@@ -24,18 +24,18 @@ import QRCodeDisplay from "@/components/QRCodeDisplay";
 
 const events = {
   technical: [
-    { id: 'web-dev', name: 'Web Development Challenge', price: 100 },
-    { id: 'poster', name: 'Poster Presentation', price: 100 },
-    { id: 'tech-expo', name: 'Tech Expo', price: 100 },
-    { id: 'pymaster', name: 'PyMaster Contest', price: 50 },
-    { id: 'tech-quiz', name: 'Technical Quiz', price: 100 },
+    { id: 'web-dev', name: 'Web Development Challenge', price: 100, teamSize: { min: 1, max: 3, type: 'team' } },
+    { id: 'poster', name: 'Poster Presentation', price: 100, teamSize: { min: 1, max: 2, type: 'optional' } },
+    { id: 'tech-expo', name: 'Tech Expo', price: 100, teamSize: { min: 1, max: 1, type: 'solo' } },
+    { id: 'pymaster', name: 'PyMaster Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
+    { id: 'tech-quiz', name: 'Technical Quiz', price: 100, teamSize: { min: 1, max: 2, type: 'optional' } },
   ],
   nonTechnical: [
-    { id: 'photography', name: 'Photography Contest', price: 50 },
-    { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200 },
-    { id: 'drawing', name: 'Live Drawing', price: 50 },
-    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 200 },
-    { id: 'meme-contest', name: 'Tech Meme Contest', price: 50 },
+    { id: 'photography', name: 'Photography Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
+    { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200, teamSize: { min: 1, max: 4, type: 'optional' } },
+    { id: 'drawing', name: 'Live Drawing', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
+    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 200, teamSize: { min: 1, max: 4, type: 'optional' } },
+    { id: 'meme-contest', name: 'Tech Meme Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
   ],
 };
 
@@ -58,6 +58,7 @@ const Registration = () => {
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [teamMembers, setTeamMembers] = useState<{[eventId: string]: string[]}>({});
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -130,11 +131,51 @@ const Registration = () => {
   };
 
   const handleEventToggle = (eventId: string) => {
-    setSelectedEvents(prev =>
-      prev.includes(eventId)
+    setSelectedEvents(prev => {
+      const newSelectedEvents = prev.includes(eventId) 
         ? prev.filter(id => id !== eventId)
-        : [...prev, eventId]
-    );
+        : [...prev, eventId];
+      
+      // Clear team members for deselected events
+      if (prev.includes(eventId)) {
+        setTeamMembers(prevTeam => {
+          const newTeam = { ...prevTeam };
+          delete newTeam[eventId];
+          return newTeam;
+        });
+      }
+      
+      return newSelectedEvents;
+    });
+  };
+
+  const handleTeamMemberChange = (eventId: string, index: number, value: string) => {
+    setTeamMembers(prev => {
+      const eventTeam = prev[eventId] || [];
+      const newTeam = [...eventTeam];
+      newTeam[index] = value;
+      return { ...prev, [eventId]: newTeam };
+    });
+  };
+
+  const addTeamMember = (eventId: string) => {
+    setTeamMembers(prev => {
+      const eventTeam = prev[eventId] || [];
+      return { ...prev, [eventId]: [...eventTeam, ''] };
+    });
+  };
+
+  const removeTeamMember = (eventId: string, index: number) => {
+    setTeamMembers(prev => {
+      const eventTeam = prev[eventId] || [];
+      const newTeam = eventTeam.filter((_, i) => i !== index);
+      return { ...prev, [eventId]: newTeam };
+    });
+  };
+
+  const getEventTeamSize = (eventId: string) => {
+    const allEvents = [...events.technical, ...events.nonTechnical];
+    return allEvents.find(e => e.id === eventId)?.teamSize;
   };
 
 
@@ -339,6 +380,26 @@ const Registration = () => {
       return;
     }
 
+    // Validate team members for team events
+    for (const eventId of selectedEvents) {
+      const eventTeamSize = getEventTeamSize(eventId);
+      if (eventTeamSize && eventTeamSize.type === 'team') {
+        const eventTeam = teamMembers[eventId] || [];
+        const validMembers = eventTeam.filter(member => member.trim().length > 0);
+        
+        if (validMembers.length < eventTeamSize.min) {
+          const allEvents = [...events.technical, ...events.nonTechnical];
+          const eventName = allEvents.find(e => e.id === eventId)?.name;
+          toast({
+            title: "Validation Error",
+            description: `${eventName} requires at least ${eventTeamSize.min} team member(s). Please add team member names.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     setIsLoading(true);
     try {
       // Optional pre-check (non-blocking): warn if UTR already exists server-side, but do not block
@@ -372,6 +433,7 @@ const Registration = () => {
         upiTxnId: upiTxnId.trim() || undefined,
         ticketDownloadTime,
         verificationHash,
+        teamMembers,
       };
 
       console.log("Sending to Google Sheets:", payload);
@@ -424,6 +486,7 @@ const Registration = () => {
         setPaymentCompleted(false);
         setRulesAccepted(false);
         setShowSuccessPopup(false);
+        setTeamMembers({});
       }, 5000);
     } catch (error) {
       console.error("Error submitting to sheets:", error);
@@ -565,16 +628,63 @@ const Registration = () => {
                   <h3 className="text-lg font-semibold mb-3 text-primary">Technical Events</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {events.technical.map(event => (
-                      <div key={event.id} className="flex items-center space-x-2 p-3 rounded-lg bg-muted/30">
-                        <Checkbox
-                          id={event.id}
-                          checked={selectedEvents.includes(event.id)}
-                          onCheckedChange={() => handleEventToggle(event.id)}
-                        />
-                        <Label htmlFor={event.id} className="flex-1 cursor-pointer">
-                          {event.name}
-                        </Label>
-                        <span className="text-sm font-medium text-primary">₹{event.price}</span>
+                      <div key={event.id} className="p-3 rounded-lg bg-muted/30 space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={event.id}
+                            checked={selectedEvents.includes(event.id)}
+                            onCheckedChange={() => handleEventToggle(event.id)}
+                          />
+                          <Label htmlFor={event.id} className="flex-1 cursor-pointer">
+                            {event.name}
+                          </Label>
+                          <span className="text-sm font-medium text-primary">₹{event.price}</span>
+                        </div>
+                        
+                        {/* Team Member Fields */}
+                        {selectedEvents.includes(event.id) && event.teamSize.type !== 'solo' && (
+                          <div className="ml-6 space-y-2">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Team Members {event.teamSize.type === 'team' ? '(Required)' : '(Optional)'}:
+                            </div>
+                            {(teamMembers[event.id] || []).map((member, index) => (
+                              <div key={index} className="flex items-center space-x-2">
+                                <Input
+                                  placeholder={`Team Member ${index + 1} Name`}
+                                  value={member}
+                                  onChange={(e) => handleTeamMemberChange(event.id, index, e.target.value)}
+                                  className="flex-1"
+                                />
+                                {(teamMembers[event.id] || []).length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeTeamMember(event.id, index)}
+                                  >
+                                    Remove
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                            {(teamMembers[event.id] || []).length < event.teamSize.max && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addTeamMember(event.id)}
+                              >
+                                + Add Team Member
+                              </Button>
+                            )}
+                            <div className="text-xs text-muted-foreground">
+                              {event.teamSize.type === 'team' 
+                                ? `Required: ${event.teamSize.min}-${event.teamSize.max} members`
+                                : `Optional: up to ${event.teamSize.max} members`
+                              }
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -585,16 +695,63 @@ const Registration = () => {
                   <h3 className="text-lg font-semibold mb-3 text-secondary">Non-Technical Events</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {events.nonTechnical.map(event => (
-                      <div key={event.id} className="flex items-center space-x-2 p-3 rounded-lg bg-muted/30">
-                        <Checkbox
-                          id={event.id}
-                          checked={selectedEvents.includes(event.id)}
-                          onCheckedChange={() => handleEventToggle(event.id)}
-                        />
-                        <Label htmlFor={event.id} className="flex-1 cursor-pointer">
-                          {event.name}
-                        </Label>
-                        <span className="text-sm font-medium text-secondary">₹{event.price}</span>
+                      <div key={event.id} className="p-3 rounded-lg bg-muted/30 space-y-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={event.id}
+                            checked={selectedEvents.includes(event.id)}
+                            onCheckedChange={() => handleEventToggle(event.id)}
+                          />
+                          <Label htmlFor={event.id} className="flex-1 cursor-pointer">
+                            {event.name}
+                          </Label>
+                          <span className="text-sm font-medium text-secondary">₹{event.price}</span>
+                        </div>
+                        
+                        {/* Team Member Fields */}
+                        {selectedEvents.includes(event.id) && event.teamSize.type !== 'solo' && (
+                          <div className="ml-6 space-y-2">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Team Members {event.teamSize.type === 'team' ? '(Required)' : '(Optional)'}:
+                            </div>
+                            {(teamMembers[event.id] || []).map((member, index) => (
+                              <div key={index} className="flex items-center space-x-2">
+                                <Input
+                                  placeholder={`Team Member ${index + 1} Name`}
+                                  value={member}
+                                  onChange={(e) => handleTeamMemberChange(event.id, index, e.target.value)}
+                                  className="flex-1"
+                                />
+                                {(teamMembers[event.id] || []).length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => removeTeamMember(event.id, index)}
+                                  >
+                                    Remove
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                            {(teamMembers[event.id] || []).length < event.teamSize.max && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => addTeamMember(event.id)}
+                              >
+                                + Add Team Member
+                              </Button>
+                            )}
+                            <div className="text-xs text-muted-foreground">
+                              {event.teamSize.type === 'team' 
+                                ? `Required: ${event.teamSize.min}-${event.teamSize.max} members`
+                                : `Optional: up to ${event.teamSize.max} members`
+                              }
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

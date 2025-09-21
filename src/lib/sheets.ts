@@ -12,6 +12,7 @@ export type RegistrationPayload = {
   upiTxnId?: string;
   ticketDownloadTime?: string;
   verificationHash?: string;
+  teamMembers?: {[eventId: string]: string[]};
 };
 
 // Optional server-side UTR existence check. Expects Apps Script to return { exists: boolean }
@@ -65,6 +66,7 @@ export async function postRegistrationToSheets(payload: RegistrationPayload): Pr
     upiTxnId: payload.upiTxnId || '',
     ticketDownloadTime: convertToIST(payload.ticketDownloadTime || ''),
     verificationHash: payload.verificationHash || '',
+    teamMembers: payload.teamMembers ? JSON.stringify(payload.teamMembers) : '',
     flagIfDuplicate: '1',
   });
 

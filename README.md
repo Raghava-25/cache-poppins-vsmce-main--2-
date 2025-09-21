@@ -102,7 +102,7 @@ function doPost(e) {
   // Ensure headers exist (run once)
   const required = [
     'timestamp','fullName','email','phone','college','rollNo','section',
-    'selectedEvents','totalAmount','transactionRef','paidAtIso','upiTxnId','ticketDownloadTime','verificationHash','screenshotBase64','dupFlag'
+    'selectedEvents','totalAmount','transactionRef','paidAtIso','upiTxnId','ticketDownloadTime','verificationHash','teamMembers','screenshotBase64','dupFlag'
   ];
   if (!headers || headers.length === 0 || required.some(h => headers.indexOf(h) === -1)) {
     sheet.getRange(1,1,1,required.length).setValues([required]);
@@ -131,6 +131,7 @@ function doPost(e) {
     data.upiTxnId || '',
     data.ticketDownloadTime || '',
     data.verificationHash || '',
+    data.teamMembers ? JSON.stringify(data.teamMembers) : '',
     data.screenshotBase64 || '',
     dupFlag
   ];
