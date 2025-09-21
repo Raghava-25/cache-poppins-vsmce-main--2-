@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "react-router-dom";
 import {
@@ -56,6 +57,7 @@ const Registration = () => {
   const [showThankYou, setShowThankYou] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -387,7 +389,8 @@ const Registration = () => {
       const result = await res.json();
       console.log("Success response:", result);
 
-      // Show thank you message
+      // Show success popup and thank you message
+      setShowSuccessPopup(true);
       setShowThankYou(true);
 
       toast({
@@ -420,6 +423,7 @@ const Registration = () => {
         setShowThankYou(false);
         setPaymentCompleted(false);
         setRulesAccepted(false);
+        setShowSuccessPopup(false);
       }, 5000);
     } catch (error) {
       console.error("Error submitting to sheets:", error);
@@ -798,6 +802,38 @@ const Registration = () => {
           </form>
         </div>
       </div>
+
+      {/* Success Popup */}
+      <Dialog open={showSuccessPopup} onOpenChange={setShowSuccessPopup}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold text-green-600">
+              🎉 Registration Successful!
+            </DialogTitle>
+            <DialogDescription className="text-center text-base">
+              Thank you for registering for Cache 2025!
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-center">
+            <div className="text-6xl">✅</div>
+            <div className="space-y-2">
+              <p className="text-muted-foreground">
+                Your registration has been submitted successfully. Our team will send your ticket through email.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Please keep your payment screenshot ready to show at the event.
+              </p>
+            </div>
+            <Button 
+              onClick={() => setShowSuccessPopup(false)}
+              className="w-full"
+            >
+              Got it!
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );

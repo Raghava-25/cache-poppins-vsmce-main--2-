@@ -140,10 +140,49 @@ function doPost(e) {
 }
 ```
 
-3. Deploy → New deployment → Select type “Web app”.
+3. Deploy → New deployment → Select type "Web app".
    - Execute as: Me
    - Who has access: Anyone with the link
    - Copy the Web App URL and set it to `VITE_SHEETS_WEBHOOK_URL`.
+
+4. For UTR validation, add this function to your Apps Script:
+
+```javascript
+function doGet(e) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheets()[0];
+  const upiTxnId = e.parameter.upiTxnId;
+  
+  if (!upiTxnId) {
+    return ContentService.createTextOutput(JSON.stringify({ exists: false }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // Find column index for UTR ID
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const upiCol = headers.indexOf('upiTxnId') + 1;
+  
+  if (upiCol === 0) {
+    return ContentService.createTextOutput(JSON.stringify({ exists: false }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // Check ALL rows for duplicate UTR (not just current date)
+  const lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    const upiIds = sheet.getRange(2, upiCol, lastRow - 1, 1).getValues().flat();
+    const exists = upiIds.includes(upiTxnId);
+    
+    return ContentService.createTextOutput(JSON.stringify({ exists }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify({ exists: false }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+```
+
+5. Deploy this as a separate web app and set the URL to `VITE_SHEETS_CHECK_UTR_URL`.
 
 ### App flow
 
