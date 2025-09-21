@@ -24,17 +24,17 @@ import QRCodeDisplay from "@/components/QRCodeDisplay";
 
 const events = {
   technical: [
-    { id: 'web-dev', name: 'Web Development Challenge', price: 100, teamSize: { min: 1, max: 3, type: 'team' } },
-    { id: 'poster', name: 'Poster Presentation', price: 100, teamSize: { min: 1, max: 2, type: 'optional' } },
+    { id: 'web-dev', name: 'Web Development Challenge', price: 100, teamSize: { min: 1, max: 2, type: 'team' } },
+    { id: 'poster', name: 'Poster Presentation', price: 100, teamSize: { min: 1, max: 1, type: 'optional' } },
     { id: 'tech-expo', name: 'Tech Expo', price: 100, teamSize: { min: 1, max: 1, type: 'solo' } },
     { id: 'pymaster', name: 'PyMaster Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'tech-quiz', name: 'Technical Quiz', price: 100, teamSize: { min: 1, max: 2, type: 'optional' } },
+    { id: 'tech-quiz', name: 'Technical Quiz', price: 100, teamSize: { min: 1, max: 1, type: 'optional' } },
   ],
   nonTechnical: [
     { id: 'photography', name: 'Photography Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200, teamSize: { min: 1, max: 4, type: 'optional' } },
+    { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200, teamSize: { min: 1, max: 3, type: 'optional' } },
     { id: 'drawing', name: 'Live Drawing', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 200, teamSize: { min: 1, max: 4, type: 'optional' } },
+    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 200, teamSize: { min: 1, max: 3, type: 'optional' } },
     { id: 'meme-contest', name: 'Tech Meme Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
   ],
 };
