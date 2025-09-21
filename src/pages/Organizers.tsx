@@ -10,6 +10,7 @@ import muraliImage from "@/assets/organizers/murali.png";
 import raghavaImage from "@/assets/organizers/raghava.png";
 import zaheerImage from "@/assets/organizers/jaheer.png";
 import kranthImage from "@/assets/organizers/hemanth.png";
+import santhoshImage from "@/assets/organizers/santhosh.png";
 
 const organizers = [
   { name: "Abhiram Charan", role: "Event Coordinator", image: abhivanImage },
@@ -19,6 +20,8 @@ const organizers = [
   { name: "Raghava", role: "Development Lead", image: raghavaImage },
   { name: "Jaheer", role: "Design Head", image: zaheerImage },
   { name: "Hemanth", role: "Logistics Coordinator", image: kranthImage },
+  { name: "Surya Santhosh", role: "Sponsorship Coordinator", image: santhoshImage },
+
 ];
 
 const Organizers = () => {
