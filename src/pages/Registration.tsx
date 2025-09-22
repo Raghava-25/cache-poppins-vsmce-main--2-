@@ -52,7 +52,7 @@ const events = {
       id: "tech-expo",
       name: "Tech Expo",
       price: 100,
-      teamSize: { min: 1, max: 1, type: "solo" },
+      teamSize: { min: 1, max: 2, type: "team" },
     },
     {
       id: "pymaster",
