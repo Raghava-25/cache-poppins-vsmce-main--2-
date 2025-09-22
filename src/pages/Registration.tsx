@@ -1022,6 +1022,10 @@ const Registration = () => {
                           ? "UPI details will be copied to clipboard"
                           : `Opens your UPI app with amount: ₹${getTotalAmount()}`}
                       </p>
+                      <p className="text-sm text-muted-foreground text-center">
+                        Note: If your UPI app doesn't open, please Download the
+                        QR Code and Make the payment manually.
+                      </p>
 
                       {/* QR Code Display */}
                       <div className="mt-6">
