@@ -4,8 +4,20 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, Link } from "react-router-dom";
 import {
@@ -16,7 +28,7 @@ import {
   buildBhimIntentUrl,
   generateTransactionRef,
   isIOS,
-  isAndroid
+  isAndroid,
 } from "@/lib/payments";
 import { postRegistrationToSheets, checkUtrExists } from "@/lib/sheets";
 import Footer from "@/components/Footer";
@@ -24,18 +36,68 @@ import QRCodeDisplay from "@/components/QRCodeDisplay";
 
 const events = {
   technical: [
-    { id: 'web-dev', name: 'Web Development Challenge', price: 100, teamSize: { min: 1, max: 2, type: 'team' } },
-    { id: 'poster', name: 'Poster Presentation', price: 100, teamSize: { min: 1, max: 1, type: 'optional' } },
-    { id: 'tech-expo', name: 'Tech Expo', price: 100, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'pymaster', name: 'PyMaster Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'tech-quiz', name: 'Technical Quiz', price: 100, teamSize: { min: 1, max: 1, type: 'optional' } },
+    {
+      id: "web-dev",
+      name: "Web Development Challenge",
+      price: 100,
+      teamSize: { min: 1, max: 2, type: "team" },
+    },
+    {
+      id: "poster",
+      name: "Poster Presentation",
+      price: 100,
+      teamSize: { min: 1, max: 1, type: "optional" },
+    },
+    {
+      id: "tech-expo",
+      name: "Tech Expo",
+      price: 100,
+      teamSize: { min: 1, max: 1, type: "solo" },
+    },
+    {
+      id: "pymaster",
+      name: "PyMaster Contest",
+      price: 50,
+      teamSize: { min: 1, max: 1, type: "solo" },
+    },
+    {
+      id: "tech-quiz",
+      name: "Technical Quiz",
+      price: 100,
+      teamSize: { min: 1, max: 1, type: "optional" },
+    },
   ],
   nonTechnical: [
-    { id: 'photography', name: 'Photography Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'free-fire', name: 'Free Fire Esports Championship', price: 200, teamSize: { min: 1, max: 3, type: 'optional' } },
-    { id: 'drawing', name: 'Live Drawing', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
-    { id: 'bgmi', name: 'BGMI Esports Tournament', price: 200, teamSize: { min: 1, max: 3, type: 'optional' } },
-    { id: 'meme-contest', name: 'Tech Meme Contest', price: 50, teamSize: { min: 1, max: 1, type: 'solo' } },
+    {
+      id: "photography",
+      name: "Photography Contest",
+      price: 50,
+      teamSize: { min: 1, max: 1, type: "solo" },
+    },
+    {
+      id: "free-fire",
+      name: "Free Fire Esports Championship",
+      price: 200,
+      teamSize: { min: 1, max: 3, type: "optional" },
+    },
+    {
+      id: "drawing",
+      name: "Live Drawing",
+      price: 50,
+      teamSize: { min: 1, max: 1, type: "solo" },
+    },
+    {
+      id: "bgmi",
+      name: "BGMI Esports Tournament",
+      price: 200,
+      teamSize: { min: 1, max: 3, type: "optional" },
+    },
+    {
+      id: "meme-contest",
+      name: "Tech Meme Contest",
+      price: 50,
+      teamSize: { min: 1, max: 1, type: "solo" },
+    },
   ],
 };
 
@@ -43,12 +105,12 @@ const Registration = () => {
   const { toast } = useToast();
   const location = useLocation();
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    college: '',
-    rollNo: '',
-    section: '',
+    fullName: "",
+    email: "",
+    phone: "",
+    college: "",
+    rollNo: "",
+    section: "",
   });
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,12 +120,14 @@ const Registration = () => {
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [rulesAccepted, setRulesAccepted] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<{[eventId: string]: string[]}>({});
+  const [teamMembers, setTeamMembers] = useState<{
+    [eventId: string]: string[];
+  }>({});
 
   // Pre-select event from URL parameter
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const eventParam = searchParams.get('event');
+    const eventParam = searchParams.get("event");
     if (eventParam) {
       setSelectedEvents([eventParam]);
     }
@@ -73,44 +137,53 @@ const Registration = () => {
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // Check if form has any data that would be lost
-      const hasFormData = formData.fullName || formData.email || formData.phone || 
-                         formData.college || formData.rollNo || formData.section ||
-                         selectedEvents.length > 0 || upiTxnId;
-      
+      const hasFormData =
+        formData.fullName ||
+        formData.email ||
+        formData.phone ||
+        formData.college ||
+        formData.rollNo ||
+        formData.section ||
+        selectedEvents.length > 0 ||
+        upiTxnId;
+
       if (hasFormData && !showThankYou) {
         e.preventDefault();
-        e.returnValue = 'Your registration form data will be lost if you leave this page. Are you sure you want to continue?';
+        e.returnValue =
+          "Your registration form data will be lost if you leave this page. Are you sure you want to continue?";
         return e.returnValue;
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [formData, selectedEvents, upiTxnId, showThankYou]);
 
   // Handle visibility change to detect when user returns from UPI app
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && awaitingUpiReturn) {
+      if (document.visibilityState === "visible" && awaitingUpiReturn) {
         // User returned from UPI app, but payment is not completed until UTR is entered
         setTimeout(() => {
           setAwaitingUpiReturn(false);
           toast({
             title: "Returned from UPI App",
-            description: "Please enter your 12-digit UTR ID below to complete the payment process.",
+            description:
+              "Please enter your 12-digit UTR ID below to complete the payment process.",
           });
         }, 500);
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [awaitingUpiReturn, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -122,8 +195,9 @@ const Registration = () => {
     if (value.trim().length === 12 && /^\d{12}$/.test(value.trim())) {
       setPaymentCompleted(true);
       toast({
-        title: "Payment Completed!",
-        description: "Valid UTR ID entered. You can now download your ticket.",
+        title: "We will verify your payment!",
+        description:
+          "Please check your email my team will send your ticket through email.",
       });
     } else {
       setPaymentCompleted(false);
@@ -131,26 +205,30 @@ const Registration = () => {
   };
 
   const handleEventToggle = (eventId: string) => {
-    setSelectedEvents(prev => {
-      const newSelectedEvents = prev.includes(eventId) 
-        ? prev.filter(id => id !== eventId)
+    setSelectedEvents((prev) => {
+      const newSelectedEvents = prev.includes(eventId)
+        ? prev.filter((id) => id !== eventId)
         : [...prev, eventId];
-      
+
       // Clear team members for deselected events
       if (prev.includes(eventId)) {
-        setTeamMembers(prevTeam => {
+        setTeamMembers((prevTeam) => {
           const newTeam = { ...prevTeam };
           delete newTeam[eventId];
           return newTeam;
         });
       }
-      
+
       return newSelectedEvents;
     });
   };
 
-  const handleTeamMemberChange = (eventId: string, index: number, value: string) => {
-    setTeamMembers(prev => {
+  const handleTeamMemberChange = (
+    eventId: string,
+    index: number,
+    value: string
+  ) => {
+    setTeamMembers((prev) => {
       const eventTeam = prev[eventId] || [];
       const newTeam = [...eventTeam];
       newTeam[index] = value;
@@ -159,14 +237,14 @@ const Registration = () => {
   };
 
   const addTeamMember = (eventId: string) => {
-    setTeamMembers(prev => {
+    setTeamMembers((prev) => {
       const eventTeam = prev[eventId] || [];
-      return { ...prev, [eventId]: [...eventTeam, ''] };
+      return { ...prev, [eventId]: [...eventTeam, ""] };
     });
   };
 
   const removeTeamMember = (eventId: string, index: number) => {
-    setTeamMembers(prev => {
+    setTeamMembers((prev) => {
       const eventTeam = prev[eventId] || [];
       const newTeam = eventTeam.filter((_, i) => i !== index);
       return { ...prev, [eventId]: newTeam };
@@ -175,14 +253,12 @@ const Registration = () => {
 
   const getEventTeamSize = (eventId: string) => {
     const allEvents = [...events.technical, ...events.nonTechnical];
-    return allEvents.find(e => e.id === eventId)?.teamSize;
+    return allEvents.find((e) => e.id === eventId)?.teamSize;
   };
-
-
 
   const getTotalAmount = () => {
     return [...events.technical, ...events.nonTechnical]
-      .filter(event => selectedEvents.includes(event.id))
+      .filter((event) => selectedEvents.includes(event.id))
       .reduce((total, event) => total + event.price, 0);
   };
 
@@ -198,14 +274,16 @@ const Registration = () => {
     }
 
     try {
-      const envVars = (import.meta as unknown as { env: Record<string, string | undefined> }).env || {};
+      const envVars =
+        (import.meta as unknown as { env: Record<string, string | undefined> })
+          .env || {};
       const paymentParams = {
         payeeVpa: envVars.VITE_UPI_VPA || "raghavap1115-1@okicici",
         payeeName: envVars.VITE_UPI_NAME || "Raghava P",
         amount: totalAmount,
         transactionNote: `Cache 2025 - ${formData.fullName || "Participant"}`,
         transactionRef: generateTransactionRef(),
-        currency: 'INR' as const,
+        currency: "INR" as const,
       };
 
       // Try to open UPI app directly - this will open the default UPI app (PhonePe, GPay, etc.)
@@ -221,7 +299,7 @@ const Registration = () => {
       } catch (error) {
         // Fallback: try opening in new window
         try {
-          window.open(upiUrl, '_blank');
+          window.open(upiUrl, "_blank");
           toast({
             title: "Opening UPI App",
             description: "Redirecting to your UPI app for payment...",
@@ -231,17 +309,21 @@ const Registration = () => {
           const upiDetails = `UPI ID: ${paymentParams.payeeVpa}\nAmount: ₹${totalAmount}\nNote: ${paymentParams.transactionNote}`;
 
           if (navigator.clipboard) {
-            navigator.clipboard.writeText(upiDetails).then(() => {
-              toast({
-                title: "UPI Details Copied",
-                description: "UPI details copied to clipboard. Open your UPI app and paste the details.",
+            navigator.clipboard
+              .writeText(upiDetails)
+              .then(() => {
+                toast({
+                  title: "UPI Details Copied",
+                  description:
+                    "UPI details copied to clipboard. Open your UPI app and paste the details.",
+                });
+              })
+              .catch(() => {
+                toast({
+                  title: "UPI Payment Details",
+                  description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
+                });
               });
-            }).catch(() => {
-              toast({
-                title: "UPI Payment Details",
-                description: `UPI ID: ${paymentParams.payeeVpa}, Amount: ₹${totalAmount}`,
-              });
-            });
           } else {
             toast({
               title: "UPI Payment Details",
@@ -253,7 +335,6 @@ const Registration = () => {
 
       // Set awaiting state
       setAwaitingUpiReturn(true);
-
     } catch (error) {
       toast({
         title: "Error",
@@ -383,13 +464,15 @@ const Registration = () => {
     // Validate team members for team events
     for (const eventId of selectedEvents) {
       const eventTeamSize = getEventTeamSize(eventId);
-      if (eventTeamSize && eventTeamSize.type === 'team') {
+      if (eventTeamSize && eventTeamSize.type === "team") {
         const eventTeam = teamMembers[eventId] || [];
-        const validMembers = eventTeam.filter(member => member.trim().length > 0);
-        
+        const validMembers = eventTeam.filter(
+          (member) => member.trim().length > 0
+        );
+
         if (validMembers.length < eventTeamSize.min) {
           const allEvents = [...events.technical, ...events.nonTechnical];
-          const eventName = allEvents.find(e => e.id === eventId)?.name;
+          const eventName = allEvents.find((e) => e.id === eventId)?.name;
           toast({
             title: "Validation Error",
             description: `${eventName} requires at least ${eventTeamSize.min} team member(s). Please add team member names.`,
@@ -408,7 +491,8 @@ const Registration = () => {
         if (exists) {
           toast({
             title: "Notice",
-            description: "This UTR appears in our records. If incorrect, we will verify manually.",
+            description:
+              "This UTR appears in our records. If incorrect, we will verify manually.",
           });
         }
       } catch {
@@ -421,8 +505,12 @@ const Registration = () => {
       const ticketDownloadTime = new Date().toISOString();
 
       // Generate verification hash for security
-      const verificationData = `${transactionRef}-${upiTxnId.trim()}-${totalAmount}-${selectedEvents.join(',')}`;
-      const verificationHash = btoa(verificationData).substring(0, 12).toUpperCase();
+      const verificationData = `${transactionRef}-${upiTxnId.trim()}-${totalAmount}-${selectedEvents.join(
+        ","
+      )}`;
+      const verificationHash = btoa(verificationData)
+        .substring(0, 12)
+        .toUpperCase();
 
       const payload = {
         ...formData,
@@ -457,7 +545,8 @@ const Registration = () => {
 
       toast({
         title: "🎉 Registration Successful!",
-        description: "Thank you for registering! Our team will send your ticket through email.",
+        description:
+          "Thank you for registering! Our team will send your ticket through email.",
       });
 
       // Mark UTR as used (client-side) to deter reuse on this device
@@ -473,12 +562,12 @@ const Registration = () => {
       // Reset the form after successful submission
       setTimeout(() => {
         setFormData({
-          fullName: '',
-          email: '',
-          phone: '',
-          college: '',
-          rollNo: '',
-          section: '',
+          fullName: "",
+          email: "",
+          phone: "",
+          college: "",
+          rollNo: "",
+          section: "",
         });
         setSelectedEvents([]);
         setUpiTxnId("");
@@ -518,7 +607,8 @@ const Registration = () => {
             <Alert className="card-gradient border-border">
               <AlertTitle className="text-lg font-semibold">Notice</AlertTitle>
               <AlertDescription className="text-muted-foreground">
-                Please keep your payment transaction screenshot ready. You must show it along with your ticket before entering any event.
+                Please keep your payment transaction screenshot ready. You must
+                show it along with your ticket before entering any event.
               </AlertDescription>
             </Alert>
           </div>
@@ -527,7 +617,9 @@ const Registration = () => {
             {/* Personal Information */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-2xl text-gradient">Personal Information</CardTitle>
+                <CardTitle className="text-2xl text-gradient">
+                  Personal Information
+                </CardTitle>
                 <CardDescription>Please fill in your details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -565,8 +657,10 @@ const Registration = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => {
-                        const digitsOnly = e.target.value.replace(/\D/g, "").slice(0, 10);
-                        setFormData(prev => ({ ...prev, phone: digitsOnly }));
+                        const digitsOnly = e.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 10);
+                        setFormData((prev) => ({ ...prev, phone: digitsOnly }));
                       }}
                       required
                       inputMode="numeric"
@@ -619,72 +713,107 @@ const Registration = () => {
             {/* Event Selection */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-2xl text-gradient">Select Events</CardTitle>
-                <CardDescription>Choose the events you want to participate in</CardDescription>
+                <CardTitle className="text-2xl text-gradient">
+                  Select Events
+                </CardTitle>
+                <CardDescription>
+                  Choose the events you want to participate in
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Technical Events */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3 text-primary">Technical Events</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-primary">
+                    Technical Events
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {events.technical.map(event => (
-                      <div key={event.id} className="p-3 rounded-lg bg-muted/30 space-y-3">
+                    {events.technical.map((event) => (
+                      <div
+                        key={event.id}
+                        className="p-3 rounded-lg bg-muted/30 space-y-3"
+                      >
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id={event.id}
                             checked={selectedEvents.includes(event.id)}
                             onCheckedChange={() => handleEventToggle(event.id)}
                           />
-                          <Label htmlFor={event.id} className="flex-1 cursor-pointer">
+                          <Label
+                            htmlFor={event.id}
+                            className="flex-1 cursor-pointer"
+                          >
                             {event.name}
                           </Label>
-                          <span className="text-sm font-medium text-primary">₹{event.price}</span>
+                          <span className="text-sm font-medium text-primary">
+                            ₹{event.price}
+                          </span>
                         </div>
-                        
+
                         {/* Team Member Fields */}
-                        {selectedEvents.includes(event.id) && event.teamSize.type !== 'solo' && (
-                          <div className="ml-6 space-y-2">
-                            <div className="text-sm font-medium text-muted-foreground">
-                              Team Members {event.teamSize.type === 'team' ? '(Required)' : '(Optional)'}:
-                            </div>
-                            {(teamMembers[event.id] || []).map((member, index) => (
-                              <div key={index} className="flex items-center space-x-2">
-                                <Input
-                                  placeholder={`Team Member ${index + 1} Name`}
-                                  value={member}
-                                  onChange={(e) => handleTeamMemberChange(event.id, index, e.target.value)}
-                                  className="flex-1"
-                                />
-                                {(teamMembers[event.id] || []).length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeTeamMember(event.id, index)}
-                                  >
-                                    Remove
-                                  </Button>
-                                )}
+                        {selectedEvents.includes(event.id) &&
+                          event.teamSize.type !== "solo" && (
+                            <div className="ml-6 space-y-2">
+                              <div className="text-sm font-medium text-muted-foreground">
+                                Team Members{" "}
+                                {event.teamSize.type === "team"
+                                  ? "(Required)"
+                                  : "(Optional)"}
+                                :
                               </div>
-                            ))}
-                            {(teamMembers[event.id] || []).length < event.teamSize.max && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addTeamMember(event.id)}
-                              >
-                                + Add Team Member
-                              </Button>
-                            )}
-                            <div className="text-xs text-muted-foreground">
-                              {event.teamSize.type === 'team' 
-                                ? `Required: ${event.teamSize.min}-${event.teamSize.max} members`
-                                : `Optional: up to ${event.teamSize.max} members`
-                              }
+                              {(teamMembers[event.id] || []).map(
+                                (member, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Input
+                                      placeholder={`Team Member ${
+                                        index + 1
+                                      } Name`}
+                                      value={member}
+                                      onChange={(e) =>
+                                        handleTeamMemberChange(
+                                          event.id,
+                                          index,
+                                          e.target.value
+                                        )
+                                      }
+                                      className="flex-1"
+                                    />
+                                    {(teamMembers[event.id] || []).length >
+                                      1 && (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          removeTeamMember(event.id, index)
+                                        }
+                                      >
+                                        Remove
+                                      </Button>
+                                    )}
+                                  </div>
+                                )
+                              )}
+                              {(teamMembers[event.id] || []).length <
+                                event.teamSize.max && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addTeamMember(event.id)}
+                                >
+                                  + Add Team Member
+                                </Button>
+                              )}
+                              <div className="text-xs text-muted-foreground">
+                                {event.teamSize.type === "team"
+                                  ? `Required: ${event.teamSize.min}-${event.teamSize.max} members`
+                                  : `Optional: up to ${event.teamSize.max} members`}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     ))}
                   </div>
@@ -692,66 +821,97 @@ const Registration = () => {
 
                 {/* Non-Technical Events */}
                 <div>
-                  <h3 className="text-lg font-semibold mb-3 text-secondary">Non-Technical Events</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-secondary">
+                    Non-Technical Events
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {events.nonTechnical.map(event => (
-                      <div key={event.id} className="p-3 rounded-lg bg-muted/30 space-y-3">
+                    {events.nonTechnical.map((event) => (
+                      <div
+                        key={event.id}
+                        className="p-3 rounded-lg bg-muted/30 space-y-3"
+                      >
                         <div className="flex items-center space-x-2">
                           <Checkbox
                             id={event.id}
                             checked={selectedEvents.includes(event.id)}
                             onCheckedChange={() => handleEventToggle(event.id)}
                           />
-                          <Label htmlFor={event.id} className="flex-1 cursor-pointer">
+                          <Label
+                            htmlFor={event.id}
+                            className="flex-1 cursor-pointer"
+                          >
                             {event.name}
                           </Label>
-                          <span className="text-sm font-medium text-secondary">₹{event.price}</span>
+                          <span className="text-sm font-medium text-secondary">
+                            ₹{event.price}
+                          </span>
                         </div>
-                        
+
                         {/* Team Member Fields */}
-                        {selectedEvents.includes(event.id) && event.teamSize.type !== 'solo' && (
-                          <div className="ml-6 space-y-2">
-                            <div className="text-sm font-medium text-muted-foreground">
-                              Team Members {event.teamSize.type === 'team' ? '(Required)' : '(Optional)'}:
-                            </div>
-                            {(teamMembers[event.id] || []).map((member, index) => (
-                              <div key={index} className="flex items-center space-x-2">
-                                <Input
-                                  placeholder={`Team Member ${index + 1} Name`}
-                                  value={member}
-                                  onChange={(e) => handleTeamMemberChange(event.id, index, e.target.value)}
-                                  className="flex-1"
-                                />
-                                {(teamMembers[event.id] || []).length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => removeTeamMember(event.id, index)}
-                                  >
-                                    Remove
-                                  </Button>
-                                )}
+                        {selectedEvents.includes(event.id) &&
+                          event.teamSize.type !== "solo" && (
+                            <div className="ml-6 space-y-2">
+                              <div className="text-sm font-medium text-muted-foreground">
+                                Team Members{" "}
+                                {event.teamSize.type === "team"
+                                  ? "(Required)"
+                                  : "(Optional)"}
+                                :
                               </div>
-                            ))}
-                            {(teamMembers[event.id] || []).length < event.teamSize.max && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => addTeamMember(event.id)}
-                              >
-                                + Add Team Member
-                              </Button>
-                            )}
-                            <div className="text-xs text-muted-foreground">
-                              {event.teamSize.type === 'team' 
-                                ? `Required: ${event.teamSize.min}-${event.teamSize.max} members`
-                                : `Optional: up to ${event.teamSize.max} members`
-                              }
+                              {(teamMembers[event.id] || []).map(
+                                (member, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Input
+                                      placeholder={`Team Member ${
+                                        index + 1
+                                      } Name`}
+                                      value={member}
+                                      onChange={(e) =>
+                                        handleTeamMemberChange(
+                                          event.id,
+                                          index,
+                                          e.target.value
+                                        )
+                                      }
+                                      className="flex-1"
+                                    />
+                                    {(teamMembers[event.id] || []).length >
+                                      1 && (
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          removeTeamMember(event.id, index)
+                                        }
+                                      >
+                                        Remove
+                                      </Button>
+                                    )}
+                                  </div>
+                                )
+                              )}
+                              {(teamMembers[event.id] || []).length <
+                                event.teamSize.max && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => addTeamMember(event.id)}
+                                >
+                                  + Add Team Member
+                                </Button>
+                              )}
+                              <div className="text-xs text-muted-foreground">
+                                {event.teamSize.type === "team"
+                                  ? `Required: ${event.teamSize.min}-${event.teamSize.max} members`
+                                  : `Optional: up to ${event.teamSize.max} members`}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     ))}
                   </div>
@@ -762,7 +922,9 @@ const Registration = () => {
                   <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
                     <div className="flex justify-between items-center">
                       <span className="text-lg font-medium">Total Amount:</span>
-                      <span className="text-2xl font-bold text-primary">₹{getTotalAmount()}</span>
+                      <span className="text-2xl font-bold text-primary">
+                        ₹{getTotalAmount()}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -772,29 +934,36 @@ const Registration = () => {
             {/* Rules Acceptance */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
-                <CardTitle className="text-2xl text-gradient">Rules & Guidelines</CardTitle>
-                <CardDescription>Please read and accept the event rules before proceeding</CardDescription>
+                <CardTitle className="text-2xl text-gradient">
+                  Rules & Guidelines
+                </CardTitle>
+                <CardDescription>
+                  Please read and accept the event rules before proceeding
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <Checkbox
                     id="rulesAccepted"
                     checked={rulesAccepted}
-                    onCheckedChange={(checked) => setRulesAccepted(checked as boolean)}
+                    onCheckedChange={(checked) =>
+                      setRulesAccepted(checked as boolean)
+                    }
                     className="mt-1"
                   />
                   <div className="flex-1">
                     <Label htmlFor="rulesAccepted" className="cursor-pointer">
                       I have read and agree to the{" "}
-                      <a 
-                        href="/rules" 
-                        target="_blank" 
+                      <a
+                        href="/rules"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline font-medium"
                       >
                         Event Rules and Guidelines
                       </a>
-                      . I understand that I must follow all rules and that any misconduct may lead to disqualification without refund.
+                      . I understand that I must follow all rules and that any
+                      misconduct may lead to disqualification without refund.
                     </Label>
                   </div>
                 </div>
@@ -802,9 +971,13 @@ const Registration = () => {
                   <p className="font-medium mb-2">Important Reminders:</p>
                   <ul className="list-disc pl-5 space-y-1">
                     <li>Carry your college ID and event ticket at all times</li>
-                    <li>Follow volunteers' instructions and campus guidelines</li>
+                    <li>
+                      Follow volunteers' instructions and campus guidelines
+                    </li>
                     <li>Decisions by judges/organizers are final</li>
-                    <li>Keep your payment screenshot ready to show at the event</li>
+                    <li>
+                      Keep your payment screenshot ready to show at the event
+                    </li>
                   </ul>
                 </div>
               </CardContent>
@@ -814,14 +987,15 @@ const Registration = () => {
             {selectedEvents.length > 0 && getTotalAmount() > 0 && (
               <Card className="card-gradient border-border animate-slide-up">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-gradient">Payment</CardTitle>
+                  <CardTitle className="text-2xl text-gradient">
+                    Payment
+                  </CardTitle>
                   <CardDescription>
                     {awaitingUpiReturn
                       ? "Waiting for payment completion..."
                       : paymentCompleted
-                        ? "Payment completed! You can now download your ticket."
-                        : "Click the button below to pay with your UPI app"
-                    }
+                      ? "my team will verify your UTR ID. Click below to submit your registration"
+                      : "Click the button below to pay with your UPI app"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -835,15 +1009,18 @@ const Registration = () => {
                         onClick={handleUpiPayment}
                         disabled={isLoading || awaitingUpiReturn}
                       >
-                        {awaitingUpiReturn ? "⏳ Waiting for payment..." : isIOS() ? "📋 Copy UPI Details" : "💳 Pay with GPay/UPI"}
+                        {awaitingUpiReturn
+                          ? "⏳ Waiting for payment..."
+                          : isIOS()
+                          ? "📋 Copy UPI Details"
+                          : "💳 Pay with GPay/UPI"}
                       </Button>
                       <p className="text-sm text-muted-foreground text-center">
                         {awaitingUpiReturn
                           ? "Complete the payment in your UPI app and return here"
                           : isIOS()
-                            ? "UPI details will be copied to clipboard"
-                            : `Opens your UPI app with amount: ₹${getTotalAmount()}`
-                        }
+                          ? "UPI details will be copied to clipboard"
+                          : `Opens your UPI app with amount: ₹${getTotalAmount()}`}
                       </p>
 
                       {/* QR Code Display */}
@@ -851,15 +1028,22 @@ const Registration = () => {
                         <QRCodeDisplay
                           upiId="raghavap1115-1@okicici"
                           amount={getTotalAmount()}
-                          transactionNote={`Cache 2025 - ${formData.fullName || "Participant"}`}
+                          transactionNote={`Cache 2025 - ${
+                            formData.fullName || "Participant"
+                          }`}
                           onCopyDetails={() => {
-                            const upiDetails = `UPI ID: raghavap1115-1@okicici\nAmount: ₹${getTotalAmount()}\nNote: Cache 2025 - ${formData.fullName || "Participant"}`;
-                            navigator.clipboard.writeText(upiDetails).then(() => {
-                              toast({
-                                title: "UPI Details Copied",
-                                description: "UPI details copied to clipboard",
+                            const upiDetails = `UPI ID: raghavap1115-1@okicici\nAmount: ₹${getTotalAmount()}\nNote: Cache 2025 - ${
+                              formData.fullName || "Participant"
+                            }`;
+                            navigator.clipboard
+                              .writeText(upiDetails)
+                              .then(() => {
+                                toast({
+                                  title: "UPI Details Copied",
+                                  description:
+                                    "UPI details copied to clipboard",
+                                });
                               });
-                            });
                           }}
                         />
                       </div>
@@ -867,14 +1051,24 @@ const Registration = () => {
                       {/* iOS Manual UPI Details */}
                       {isIOS() && !awaitingUpiReturn && (
                         <div className="mt-4 p-4 bg-muted/30 rounded-lg border">
-                          <p className="text-sm font-medium mb-2">For iOS users - Manual UPI Entry:</p>
+                          <p className="text-sm font-medium mb-2">
+                            For iOS users - Manual UPI Entry:
+                          </p>
                           <div className="text-xs text-muted-foreground space-y-1">
-                            <p><strong>UPI ID:</strong> raghavap1115-1@okicici</p>
-                            <p><strong>Amount:</strong> ₹{getTotalAmount()}</p>
-                            <p><strong>Note:</strong> Cache 2025 - {formData.fullName || "Participant"}</p>
+                            <p>
+                              <strong>UPI ID:</strong> raghavap1115-1@okicici
+                            </p>
+                            <p>
+                              <strong>Amount:</strong> ₹{getTotalAmount()}
+                            </p>
+                            <p>
+                              <strong>Note:</strong> Cache 2025 -{" "}
+                              {formData.fullName || "Participant"}
+                            </p>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            If the button doesn't work, copy these details and open your UPI app manually.
+                            If the button doesn't work, copy these details and
+                            open your UPI app manually.
                           </p>
                         </div>
                       )}
@@ -886,9 +1080,15 @@ const Registration = () => {
                     <div className="flex flex-col items-center gap-4">
                       <div className="text-center space-y-2">
                         <div className="text-4xl">✅</div>
-                        <p className="text-lg font-semibold text-green-600">Payment Completed!</p>
+                        <p className="text-lg font-semibold text-green-600">
+                          “We will verify and contact via email !”
+                        </p>
                         <p className="text-sm text-muted-foreground">
-                          Your UTR ID has been verified. Click below to submit your registration.
+                          My team will check your payment and registration
+                          details and send you a ticket through email. please
+                          re-verify your Details & UTR ID before submitting and
+                          for further queries contact on whatsapp(6300693939) &
+                          email us at raghavap1116@gmail.com.
                         </p>
                       </div>
                       <Button
@@ -910,12 +1110,18 @@ const Registration = () => {
             {selectedEvents.length > 0 && getTotalAmount() > 0 && (
               <Card className="card-gradient border-border animate-slide-up">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-gradient">Payment Details *</CardTitle>
-                  <CardDescription>Enter 12-digit UTR ID from your payment (Required)</CardDescription>
+                  <CardTitle className="text-2xl text-gradient">
+                    Payment Details *
+                  </CardTitle>
+                  <CardDescription>
+                    Enter 12-digit UTR ID from your payment (Required)
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="upiTxnId">12-Digit UTR (Unique Transaction Reference) ID *</Label>
+                    <Label htmlFor="upiTxnId">
+                      12-Digit UTR (Unique Transaction Reference) ID *
+                    </Label>
                     <Input
                       id="upiTxnId"
                       name="upiTxnId"
@@ -929,7 +1135,8 @@ const Registration = () => {
                     />
                     <div className="text-xs text-muted-foreground mt-1">
                       <strong>How to find your 12-digit UTR ID:</strong>
-                      <br />• Check your UPI app (PhonePe, Google Pay, Paytm, etc.)
+                      <br />• Check your UPI app (PhonePe, Google Pay, Paytm,
+                      etc.)
                       <br />• Look for the transaction reference number
                       <br />• It's a 12-digit number (no letters)
                       <br />• Example: 123456789012
@@ -945,12 +1152,16 @@ const Registration = () => {
                 <CardContent className="pt-6">
                   <div className="text-center space-y-4">
                     <div className="text-6xl">🎉</div>
-                    <h3 className="text-2xl font-bold text-green-600">Thank You for Registering!</h3>
+                    <h3 className="text-2xl font-bold text-green-600">
+                      Thank You for Registering!
+                    </h3>
                     <p className="text-muted-foreground">
-                      Your registration has been submitted successfully. Our team will send your ticket through email.
+                      Your registration has been submitted successfully. Our
+                      team will send your ticket through email.
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Please keep your payment screenshot ready to show at the event.
+                      Please keep your payment screenshot ready to show at the
+                      event.
                     </p>
                   </div>
                 </CardContent>
@@ -975,13 +1186,14 @@ const Registration = () => {
             <div className="text-6xl">✅</div>
             <div className="space-y-2">
               <p className="text-muted-foreground">
-                Your registration has been submitted successfully. Our team will send your ticket through email.
+                Your registration has been submitted successfully. Our team will
+                send your ticket through email.
               </p>
               <p className="text-sm text-muted-foreground">
                 Please keep your payment screenshot ready to show at the event.
               </p>
             </div>
-            <Button 
+            <Button
               onClick={() => setShowSuccessPopup(false)}
               className="w-full"
             >
