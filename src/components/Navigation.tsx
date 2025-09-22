@@ -12,7 +12,7 @@ export const Navigation = () => {
     { href: "/registration", label: "Registration" },
     { href: "/about", label: "About" },
     { href: "/events", label: "Events" },
-    { href: "/organizers", label: "Organizers" },
+    // { href: "/organizer", label: "Organizers" },
     { href: "/rules", label: "Rules" },
   ];
 

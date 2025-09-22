@@ -238,12 +238,12 @@ const Index = () => {
                 >
                   About Us
                 </Link>
-                <Link
+                {/* <Link
                   to="/organizers"
                   className="block text-muted-foreground hover:text-primary smooth-transition"
                 >
                   Organizers
-                </Link>
+                </Link> */}
                 <Link
                   to="/rules"
                   className="block text-muted-foreground hover:text-primary smooth-transition"
