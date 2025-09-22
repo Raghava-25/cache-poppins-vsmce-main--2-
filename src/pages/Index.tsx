@@ -33,7 +33,7 @@ const Index = () => {
 
         <div className="relative z-10 text-center px-4 animate-fade-in">
           <div className="max-w-4xl mx-auto">
-            <h1 className="hero-title mb-8 float-animation">Cache 2025</h1>
+            <h1 className="hero-title mb-8 float-animation">Cache 2K25</h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
               VSM College of Engineering's Premier Tech Festival
             </p>
@@ -299,8 +299,16 @@ const Index = () => {
 
           <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
             <p>
-              &copy;  Cache 2025, <a href="https://uptomo.vercel.app/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">UptoMo Web Solutions</a>. All rights
-              reserved.
+              &copy; Cache 2025,{" "}
+              <a
+                href="https://uptomo.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-primary"
+              >
+                UptoMo Web Solutions
+              </a>
+              . All rights reserved.
             </p>
           </div>
         </div>

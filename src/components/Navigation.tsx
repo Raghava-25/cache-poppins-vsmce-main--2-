@@ -26,9 +26,7 @@ export const Navigation = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-gradient">
-              Cache 2025
-            </div>
+            <div className="text-2xl font-bold text-gradient">Cache 2K25</div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -38,9 +36,7 @@ export const Navigation = () => {
                 key={item.href}
                 to={item.href}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
-                  isActive(item.href)
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  isActive(item.href) ? "text-primary" : "text-muted-foreground"
                 }`}
               >
                 {item.label}

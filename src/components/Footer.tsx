@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold mb-4 text-gradient">Cache 2025</h3>
+            <h3 className="text-xl font-bold mb-4 text-gradient">Cache 2K25</h3>
             <p className="text-muted-foreground">
               VSM College of Engineering's premier tech festival bringing
               together innovation and competition.
@@ -83,8 +83,16 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
           <p>
-            &copy; Cache 2025, <a href="https://uptomo.vercel.app/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">UptoMo Web Solutions</a>. All rights
-            reserved.
+            &copy; Cache 2K25,{" "}
+            <a
+              href="https://uptomo.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-primary"
+            >
+              UptoMo Web Solutions
+            </a>
+            . All rights reserved.
           </p>
         </div>
       </div>
