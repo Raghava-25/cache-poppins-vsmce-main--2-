@@ -88,6 +88,8 @@ const ruleSections: RuleSection[] = [
       "Squad of 4 + 1 substitute.",
       "Tournament lobbies and rules shared on event day.",
       "Cheating or emulator use leads to disqualification.",
+      "participants must bring their own devices.",
+      "Own network connection is required; venue Wi-Fi not guaranteed.",
     ],
   },
   {
@@ -108,6 +110,8 @@ const ruleSections: RuleSection[] = [
       "Squad of 4; TPP, classic custom rooms.",
       "No emulator/controllers; device check may occur.",
       "Follow lobby timings; absence counts as forfeit.",
+      "participants must bring their own devices.",
+      "Own network connection is required; venue Wi-Fi not guaranteed.",
     ],
   },
   {
@@ -136,14 +140,17 @@ const Rules = () => {
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-5xl font-bold mb-6 text-gradient">Event Rules</h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Please review the general rules and the specific rules for each event before participating.
+            Please review the general rules and the specific rules for each
+            event before participating.
           </p>
         </div>
 
         {/* Basic Rules */}
         <Card className="card-gradient border-border mb-12 animate-slide-up">
           <CardHeader>
-            <CardTitle className="text-2xl text-gradient">General Guidelines</CardTitle>
+            <CardTitle className="text-2xl text-gradient">
+              General Guidelines
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
@@ -157,7 +164,10 @@ const Rules = () => {
         {/* Rules by Event */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-slide-up">
           {ruleSections.map((sec) => (
-            <Card key={sec.id} className="card-gradient border-border overflow-hidden">
+            <Card
+              key={sec.id}
+              className="card-gradient border-border overflow-hidden"
+            >
               <div
                 className="h-40 bg-cover bg-center"
                 style={{ backgroundImage: `url(${sec.image})` }}
@@ -182,5 +192,3 @@ const Rules = () => {
 };
 
 export default Rules;
-
-
