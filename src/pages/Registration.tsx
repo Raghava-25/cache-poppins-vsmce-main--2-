@@ -414,7 +414,7 @@ const Registration = () => {
                 <br />
                 <br/>participant certificate will be given to the final round participants.<br />
                 <br />
-                first and second round participants will be given a certificate.<br />
+                first and second place participants will be given a certificate and medals.<br />
                 <br />
                 If any one previously registered for the events, the amount will be refunded.
               </AlertDescription>
