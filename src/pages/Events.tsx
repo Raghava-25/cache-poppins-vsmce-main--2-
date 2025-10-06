@@ -23,35 +23,30 @@ const technicalEvents = [
     title: "Web Development Challenge",
     description: "Build innovative web applications using modern frameworks and showcase your frontend and backend skills.",
     icon: Code,
-    price: 100
   },
   {
     id: "poster",
     title: "Poster Presentation",
     description: "Present your research and technical projects through creative and informative poster presentations.",
     icon: Palette,
-    price: 100
   },
   {
     id: "tech-expo",
     title: "Tech Expo",
     description: "Demonstrate your innovative projects and technical solutions to a panel of industry experts.",
     icon: Trophy,
-    price: 100
   },
   {
     id: "pymaster",
     title: "PyMaster Contest",
     description: "Test your Python programming skills with challenging algorithms and data structure problems.",
     icon: Code,
-    price: 50
   },
   {
     id: "tech-quiz",
     title: "Technical Quiz",
     description: "Challenge your knowledge across various technical domains including programming, AI, and emerging technologies.",
     icon: Trophy,
-    price: 100
   }
 ];
 
@@ -61,35 +56,30 @@ const nonTechnicalEvents = [
     title: "Photography Contest",
     description: "Capture the essence of technology and innovation through your lens in this creative photography competition.",
     icon: Camera,
-    price: 50
   },
   {
     id: "free-fire",
     title: "Free Fire Esports Championship",
     description: "Battle royale excitement awaits! Compete with teams from across colleges in this intense gaming tournament.",
     icon: Gamepad2,
-    price: 200
   },
   {
     id: "drawing",
     title: "Live Drawing",
     description: "Express your artistic skills in this live drawing competition with tech-themed creative challenges.",
     icon: Palette,
-    price: 50
   },
   {
     id: "bgmi",
     title: "BGMI Esports Tournament",
     description: "Join the ultimate mobile gaming championship and prove your tactical skills in BGMI battles.",
     icon: Gamepad2,
-    price: 200
   },
   {
     id: "meme-contest",
     title: "Tech Meme Contest",
     description: "Create hilarious and relatable tech memes that capture the spirit of programming and technology culture.",
     icon: Palette,
-    price: 50
   }
 ];
 
@@ -124,7 +114,7 @@ const EventCard = ({ event, category }: { event: any; category: 'technical' | 'n
         </div>
         <div className="absolute top-4 right-4">
           <Badge variant="secondary" className="bg-card/90">
-            ₹{event.price}
+            Free
           </Badge>
         </div>
       </div>
