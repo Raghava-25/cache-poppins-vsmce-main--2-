@@ -90,6 +90,18 @@ const events = {
   ],
 };
 
+const posterPresentationTopics = [
+  "Bio informatics",
+  "Cyber security", 
+  "Quantum computing",
+  "Brain computer interface",
+  "Digital twins using IoT",
+  "Explainable AI",
+  "Swarm Robotics",
+  "Metaverse technology",
+  "Block chain Technology"
+];
+
 const Registration = () => {
   const { toast } = useToast();
   const location = useLocation();
@@ -111,6 +123,7 @@ const Registration = () => {
   }>({});
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState("");
+  const [selectedPosterTopic, setSelectedPosterTopic] = useState("");
 
   // Calculate registration deadline (today IST 11:59 PM)
   const getRegistrationDeadline = () => {
@@ -227,6 +240,11 @@ const Registration = () => {
           delete newTeam[eventId];
           return newTeam;
         });
+        
+        // Clear poster topic if poster presentation is deselected
+        if (eventId === "poster") {
+          setSelectedPosterTopic("");
+        }
       }
 
       return newSelectedEvents;
@@ -387,6 +405,16 @@ const Registration = () => {
       }
     }
 
+    // Validate poster presentation topic selection
+    if (selectedEvents.includes("poster") && !selectedPosterTopic.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a topic for Poster Presentation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const totalAmount = 0;
@@ -404,6 +432,7 @@ const Registration = () => {
         ticketDownloadTime,
         verificationHash: "",
         teamMembers,
+        selectedPosterTopic: selectedEvents.includes("poster") ? selectedPosterTopic : "",
       };
 
       console.log("Sending to Google Sheets:", payload);
@@ -446,6 +475,7 @@ const Registration = () => {
         setRulesAccepted(false);
         setShowSuccessPopup(false);
         setTeamMembers({});
+        setSelectedPosterTopic("");
       }, 5000);
     } catch (error) {
       console.error("Error submitting to sheets:", error);
@@ -659,6 +689,39 @@ const Registration = () => {
                           </Label>
                           {/* Price hidden for free events */}
                         </div>
+
+                        {/* Poster Presentation Topic Selection */}
+                        {selectedEvents.includes(event.id) && event.id === "poster" && (
+                          <div className="ml-6 space-y-2">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Select Topic (Required):
+                            </div>
+                            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                              {posterPresentationTopics.map((topic) => (
+                                <div
+                                  key={topic}
+                                  className="flex items-center space-x-2 p-2 rounded-lg bg-muted/20 hover:bg-muted/30 transition-colors"
+                                >
+                                  <input
+                                    type="radio"
+                                    id={`poster-topic-${topic}`}
+                                    name="posterTopic"
+                                    value={topic}
+                                    checked={selectedPosterTopic === topic}
+                                    onChange={(e) => setSelectedPosterTopic(e.target.value)}
+                                    className="w-4 h-4 text-primary"
+                                  />
+                                  <Label
+                                    htmlFor={`poster-topic-${topic}`}
+                                    className="flex-1 cursor-pointer text-sm"
+                                  >
+                                    {topic}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Team Member Fields */}
                         {selectedEvents.includes(event.id) &&
