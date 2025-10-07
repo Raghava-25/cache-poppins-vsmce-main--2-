@@ -109,6 +109,57 @@ const Registration = () => {
   const [teamMembers, setTeamMembers] = useState<{
     [eventId: string]: string[];
   }>({});
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [timeRemaining, setTimeRemaining] = useState("");
+
+  // Calculate registration deadline (today IST 11:59 PM)
+  const getRegistrationDeadline = () => {
+    const now = new Date();
+    const istOffset = 5.5 * 60; // IST is UTC+5:30
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const istTime = new Date(utc + (istOffset * 60000));
+    
+    // Set deadline to today at 11:59 PM IST
+    const deadline = new Date(istTime);
+    deadline.setHours(23, 59, 59, 999);
+    
+    return deadline;
+  };
+
+  // Check if registration is still open
+  const checkRegistrationStatus = () => {
+    const deadline = getRegistrationDeadline();
+    const now = new Date();
+    const istOffset = 5.5 * 60;
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const istTime = new Date(utc + (istOffset * 60000));
+    
+    return istTime < deadline;
+  };
+
+  // Update countdown timer
+  const updateCountdown = () => {
+    const deadline = getRegistrationDeadline();
+    const now = new Date();
+    const istOffset = 5.5 * 60;
+    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const istTime = new Date(utc + (istOffset * 60000));
+    
+    const timeLeft = deadline.getTime() - istTime.getTime();
+    
+    if (timeLeft <= 0) {
+      setIsRegistrationOpen(false);
+      setTimeRemaining("Registration Closed");
+      return;
+    }
+    
+    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    
+    setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
+    setIsRegistrationOpen(true);
+  };
 
   // Pre-select event from URL parameter
   useEffect(() => {
@@ -118,6 +169,16 @@ const Registration = () => {
       setSelectedEvents([eventParam]);
     }
   }, [location]);
+
+  // Initialize registration status and timer
+  useEffect(() => {
+    updateCountdown();
+    
+    // Update countdown every second
+    const timer = setInterval(updateCountdown, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
 
   // Add beforeunload warning for unsaved changes
   useEffect(() => {
@@ -210,6 +271,16 @@ const Registration = () => {
   // No direct payment button now; users scan the static QR and then confirm
 
   const handleSubmitRegistration = async () => {
+    // Check if registration is still open
+    if (!isRegistrationOpen || !checkRegistrationStatus()) {
+      toast({
+        title: "Registration Closed",
+        description: "Registration has closed as the deadline has passed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate required fields
     if (!formData.fullName.trim()) {
       toast({
@@ -401,6 +472,38 @@ const Registration = () => {
             </p>
           </div>
 
+          {/* Registration Deadline Alert */}
+          {isRegistrationOpen ? (
+            <div className="mb-8 animate-fade-in">
+              <Alert className="border-orange-500 bg-orange-50 dark:bg-orange-950/20">
+                <AlertTitle className="text-lg font-semibold text-orange-800 dark:text-orange-200">
+                  ⏰ Registration Deadline
+                </AlertTitle>
+                <AlertDescription className="text-orange-700 dark:text-orange-300">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span>
+                      Registration closes today at 11:59 PM IST. You have time until then to register.
+                    </span>
+                    <div className="font-mono font-bold text-lg bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded">
+                      {timeRemaining}
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : (
+            <div className="mb-8 animate-fade-in">
+              <Alert className="border-red-500 bg-red-50 dark:bg-red-950/20">
+                <AlertTitle className="text-lg font-semibold text-red-800 dark:text-red-200">
+                  🚫 Registration Closed
+                </AlertTitle>
+                <AlertDescription className="text-red-700 dark:text-red-300">
+                  Registration has closed as the deadline has passed. Thank you for your interest in Cache 2025!
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+
           {/* Notice */}
           <div className="mb-8 animate-fade-in">
             <Alert className="card-gradient border-border">
@@ -423,7 +526,7 @@ const Registration = () => {
 
           
 
-          <form onSubmit={(e) => e.preventDefault()} className="space-y-8">
+          <form onSubmit={(e) => e.preventDefault()} className={`space-y-8 ${!isRegistrationOpen ? 'pointer-events-none opacity-50' : ''}`}>
             {/* Personal Information */}
             <Card className="card-gradient border-border animate-slide-up">
               <CardHeader>
@@ -786,9 +889,9 @@ const Registration = () => {
                 size="lg"
                 className="w-full max-w-md bg-gradient-primary hover:opacity-90 text-primary-foreground"
                 onClick={handleSubmitRegistration}
-                disabled={isLoading}
+                disabled={isLoading || !isRegistrationOpen}
               >
-                {isLoading ? "Processing..." : "📝 Submit Registration"}
+                {isLoading ? "Processing..." : isRegistrationOpen ? "📝 Submit Registration" : "🚫 Registration Closed"}
               </Button>
             </div>
 
