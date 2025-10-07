@@ -134,7 +134,7 @@ const Registration = () => {
     
     // Set deadline to today at 11:59 PM IST
     const deadline = new Date(istTime);
-    deadline.setHours(23, 59, 59, 999);
+    deadline.setHours(0, 59, 59, 999);
     
     return deadline;
   };
