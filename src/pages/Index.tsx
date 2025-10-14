@@ -47,16 +47,16 @@ const Index = () => {
                 asChild
                 className="bg-gradient-primary hover:opacity-90 text-primary-foreground font-semibold pulse-glow"
               >
-                <Link to="/events">View Events</Link>
+                <Link to="/gallery">View Gallery</Link>
               </Button>
-              <Button
+              {/* <Button
                 variant="outline"
                 size="lg"
                 asChild
                 className="border-primary/50 hover:bg-primary/10"
               >
                 <Link to="/registration">Register Now</Link>
-              </Button>
+              </Button> */}
             </div>
           </div>
         </div>

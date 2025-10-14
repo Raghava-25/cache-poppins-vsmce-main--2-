@@ -114,7 +114,7 @@ const EventCard = ({ event, category }: { event: any; category: 'technical' | 'n
         </div>
         <div className="absolute top-4 right-4">
           <Badge variant="secondary" className="bg-card/90">
-            Free
+            Completed
           </Badge>
         </div>
       </div>
@@ -133,21 +133,20 @@ const EventCard = ({ event, category }: { event: any; category: 'technical' | 'n
           asChild 
           className="w-full bg-gradient-primary hover:opacity-90 text-primary-foreground"
         >
-          <Link to={`/registration?event=${event.id}`}>
-            Register
+          <Link to="/gallery">
+            View Photos
           </Link>
         </Button>
         <div className="flex justify-center items-center">
-  <Button
-    variant="outline"
-    size="lg"
-    asChild
-    className="border-primary/50 hover:bg-primary/10"
-  >
-    <Link to="/rules">Rules</Link>
-  </Button>
-</div>
-
+          <Button
+            variant="outline"
+            size="lg"
+            asChild
+            className="border-primary/50 hover:bg-primary/10"
+          >
+            <Link to="/rules">Event Rules</Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -163,9 +162,14 @@ const Events = () => {
             Cache 2025 Events
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Choose from our exciting lineup of technical and non-technical events. 
-            Each competition is designed to challenge your skills and showcase your talents.
+            Thank you for participating in Cache 2025! The event has concluded successfully. 
+            Relive the memories through our event gallery below.
           </p>
+          <div className="mt-6">
+            <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 px-4 py-2 text-lg">
+              ✅ Event Completed - October 9 & 10, 2025
+            </Badge>
+          </div>
         </div>
 
         {/* Technical Events */}
@@ -212,22 +216,22 @@ const Events = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Gallery CTA Section */}
         <div className="text-center animate-slide-up">
           <Card className="card-gradient border-border p-8">
             <h2 className="text-3xl font-bold mb-4 text-gradient">
-              Ready to Compete?
+              Relive the Memories!
             </h2>
             <p className="text-muted-foreground mb-2 max-w-2xl mx-auto">
-              Register for multiple events and maximize your chances of winning.
+              Check out photos and highlights from Cache 2025. See the amazing moments captured during the events.
             </p>
-            <p className="text-sm text-accent mb-6">Exciting rewards for winners and top performers!</p>
+            <p className="text-sm text-accent mb-6">Thank you to all participants and winners!</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild className="bg-gradient-primary hover:opacity-90 pulse-glow">
-                <Link to="/registration">Register for Events</Link>
+                <Link to="/gallery">View Event Gallery</Link>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <Link to="/about">Learn More</Link>
+                <Link to="/about">About Cache 2025</Link>
               </Button>
             </div>
           </Card>

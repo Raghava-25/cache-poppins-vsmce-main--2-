@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Registration from "./pages/Registration";
 import About from "./pages/About";
 import Events from "./pages/Events";
+import Gallery from "./pages/Gallery";
 import Organizers from "./pages/Organizers";
 import Rules from "./pages/Rules";
 import NotFound from "./pages/NotFound";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/registration" element={<Registration />} />
           <Route path="/about" element={<About />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/gallery" element={<Gallery />} />
           <Route path="/organizers" element={<Organizers />} />
           <Route path="/rules" element={<Rules />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
